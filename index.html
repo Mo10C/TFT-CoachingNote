@@ -811,9 +811,10 @@
         .tier-item .del-btn { position: absolute; top: -4px; right: -4px; background: var(--red); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: none; align-items: center; justify-content: center; cursor: pointer; border: none; z-index: 10; padding: 0; }
         .tier-item:hover .del-btn { display: flex; }
         .tier-item-name {
-            font-size: 9px; color: var(--ink-mid); text-align: center;
-            line-height: 1.2; padding: 4px 2px; width: 100%;
-            word-break: break-all; font-weight: 500;
+            font-size: 5px; color: var(--ink-mid); text-align: center;
+            line-height: 1.2; padding: 2px; width: 100%;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-weight: 500;
         }
         .tier-add-row { background: var(--surface-2); border: none; padding: 8px; cursor: pointer; font-weight: 700; color: var(--ink-light); transition: 0.2s; font-size: 12px; }
         .tier-add-row:hover { background: var(--surface-3); color: var(--ink); }
@@ -824,8 +825,9 @@
         .tier-row-btn:hover { background: var(--surface-3); color: var(--ink); }
 
         /* ── BOARD BLOCK ── */
-        .board-container { display: flex; justify-content: center; gap: 20px; padding: 20px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border); overflow-x: auto; }
-        .board-grid { display: flex; flex-direction: column; gap: 4px; }
+        .board-container { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border); overflow-x: auto; }
+        .board-grid { display: flex; flex-direction: column; gap: 4px; margin: 0 auto; }
+        .board-spacer { width: 160px; flex-shrink: 0; }
         .board-row { display: flex; gap: 4px; }
         .board-row.odd { margin-left: 36px; }
         .board-hex-cell { width: 68px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -840,29 +842,104 @@
         .board-hex-item:hover { border-color: var(--red); transform: scale(1.1); }
         .board-hex-del-btn { position: absolute; top: -2px; right: -2px; background: var(--red); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 10; border: 1px solid white; }
         .board-hex-cell:hover .board-hex-del-btn { display: flex; }
-        .board-traits-panel { width: 160px; background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .board-traits-title { font-size: 11px; color: var(--gold-dim); font-weight: 700; text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
-        .board-trait-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); }
-        .board-trait-name { font-size: 11px; color: var(--ink); font-weight: 600; text-shadow: none; }
-        .board-trait-count { font-size: 11px; color: var(--navy); font-weight: 700; background: var(--gold-pale); border: 1px solid var(--gold-light); padding: 0 5px; border-radius: 4px; }
+        .board-traits-panel { width: 160px; flex-shrink: 0; background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .board-traits-title { font-size: 9px; color: var(--gold-dim); font-weight: 700; text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
+        .board-trait-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+        .board-trait-name { font-size: 9px; color: var(--ink); font-weight: 600; text-shadow: none; }
+        .board-trait-count { font-size: 9px; color: var(--navy); font-weight: 700; background: var(--gold-pale); border: 1px solid var(--gold-light); padding: 0 5px; border-radius: 4px; }
+
+        /* ── FLOWCHART BLOCK ── */
+        .flowchart-toolbar {
+            padding: 8px 10px;
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+        .flowchart-container {
+            position: relative;
+            width: 100%;
+            min-height: 400px;
+            background-color: var(--surface-2);
+            background-image: radial-gradient(var(--border-strong) 0.5px, transparent 0.5px);
+            background-size: 15px 15px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        .flowchart-node {
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .flowchart-node::after {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 0;
+            right: 0;
+            height: 30px;
+            z-index: -1;
+        }
+        .flowchart-node:hover { border-color: var(--gold); z-index: 10; }
+        .flowchart-node.dragging { z-index: 11; box-shadow: var(--shadow-lg); border-color: var(--blue); }
+        .flowchart-node-icon { width: 64px; height: 64px; padding: 0; overflow: hidden; }
+        .flowchart-node-icon img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        .flowchart-node-text { padding: 10px; font-size: 13px; line-height: 1.4; min-width: 80px; min-height: 40px; }
+        .flowchart-node-text .node-content { outline: none; cursor: text; width: 100%; height: 100%; overflow-y: auto; }
+        .flowchart-node .node-action-bar {
+            position: absolute;
+            top: -26px;
+            right: -2px;
+            display: none;
+            gap: 4px;
+            z-index: 12;
+        }
+        .flowchart-node:hover .node-action-bar { display: flex; }
+        .fc-btn {
+            background: var(--surface); color: var(--ink-mid); border: 1px solid var(--border-strong); border-radius: 4px;
+            width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
+        }
+        .fc-btn:hover { background: var(--surface-3); color: var(--ink); }
+        .fc-btn.del { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+        .fc-btn.del:hover { background: var(--red); color: white; }
+        .flowchart-container.linking-mode .flowchart-node {
+            cursor: crosshair; border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue);
+        }
+        .flowchart-edges line:hover { stroke: var(--red); stroke-width: 3; }
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 14px;
+            height: 14px;
+            cursor: nwse-resize;
+            z-index: 15;
+            background: linear-gradient(135deg, transparent 50%, var(--border-strong) 50%);
+            border-bottom-right-radius: var(--radius-sm);
+        }
 
         /* ── ASSET DRAWER ── */
         .asset-drawer {
-            position: fixed;
-            top: 0;
-            right: -340px;
             width: 340px;
-            height: 100vh;
+            margin-right: -340px;
             background: var(--surface);
             border-left: 1px solid var(--border);
             box-shadow: var(--shadow-lg);
             z-index: 200;
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
 
-        .asset-drawer.open { right: 0; }
+        .asset-drawer.open { margin-right: 0; }
 
         .drawer-header {
             padding: 14px 18px;
@@ -964,6 +1041,8 @@
         .asset-icon[data-cost="1"] { border-color: #8a9aaa; border-width: 2px; }
         .asset-icon[data-cost="2"] { border-color: #44cc66; border-width: 2px; }
         .asset-icon[data-cost="3"] { border-color: #3399ff; border-width: 2px; }
+        .asset-icon[data-cost="4"] { border-color: #cc44ff; border-width: 2px; }
+        .asset-icon[data-cost="5"] { border-color: #ffcc44; border-width: 2px; }
         
         .asset-icon[data-tier="silver"] { border-color: #A0A5A9; border-width: 2px; }
         .asset-icon[data-tier="gold"] { border-color: #C89B3C; border-width: 2px; }
@@ -1075,9 +1154,8 @@
         </div>
 
         <div class="main-content" id="main-content"></div>
-    </div>
 
-    <div id="asset-drawer" class="asset-drawer">
+        <div id="asset-drawer" class="asset-drawer">
         <div class="drawer-header">
             <h3>🎒 アセットパネル</h3>
             <button class="close-drawer-btn" onclick="toggleDrawer()">×</button>
@@ -1090,6 +1168,7 @@
         <div id="drawer-champ" class="drawer-content active"></div>
         <div id="drawer-item" class="drawer-content"></div>
         <div id="drawer-aug" class="drawer-content"></div>
+        </div>
     </div>
 
     <script>
@@ -1110,6 +1189,8 @@
                 ]);
             } else if (type === 'board') {
                 content = JSON.stringify(Array(28).fill(null));
+            } else if (type === 'flowchart') {
+                content = JSON.stringify({ nodes: [], edges: [] });
             }
             return { id: genId(), type: type, content: content, label: null, format: { fontSize: 13, fontWeight: 'normal', color: '' } }; 
         }
@@ -1190,7 +1271,10 @@
             'Timebreaker': 'タイムブレーカー', 'Sniper': 'スナイパー', 'Arbiter': 'アービター', 'Vanguard': 'ヴァンガード', 
             'Shepherd': '導き手', 'Replicator': 'レプリケーター', 'Space Groove': 'スペースグルーヴ', 'Meeple': 'ミィプル', 
             'Stargazer': '星の観測者', 'Marauder': '略奪者', 'Challenger': 'チャレンジャー', 'Psionic': 'サイオニック',
-            'Channeler': 'コンジット', 'Voyager': 'ヴォイジャー', 'Mecha': 'メカ', 'Redeemer': '救済者', 'missfortuneuniquetrait': '銃装機神'
+            'Channeler': 'コンジット', 'Voyager': 'ヴォイジャー', 'Mecha': 'メカ', 'Redeemer': '救済者', 'missfortuneuniquetrait': '銃装機神',
+            'Oracle': '神託', 'DarkEmpress': '闇の女帝', 'Doomer': 'ドゥーマー', 'Factory': 'ファクトリー',
+            'Bulwark': 'ブルワーク', 'Eradicator': '根絶者', 'Galaxy': 'ギャラクシー', 'Commander': 'コマンダー',
+            'SacredDuelist': '聖なる決闘者', 'PartyTime': 'パーティータイム'
         };
 
         const TRAIT_TIERS = {
@@ -1199,7 +1283,9 @@
             'Stargazer':[3,4,5,6,7],'Timebreaker':[2,3,4],'Bastion':[2,4,6],'Brawler':[2,4,6],
             'Challenger':[2,3,4,5],'Channeler':[2,3,4,5],'Fateweaver':[2,4],'Marauder':[2,4,6],
             'Replicator':[2,4],'Rogue':[2,3,4,5],'Shepherd':[3,5,7],'Sniper':[2,3,4,5],
-            'Vanguard':[2,4,6],'Voyager':[2,3,4,5,6],'Redeemer':[1],'missfortuneuniquetrait':[1]
+            'Vanguard':[2,4,6],'Voyager':[2,3,4,5,6],'Redeemer':[1],'missfortuneuniquetrait':[1],
+            'DarkEmpress':[1], 'Doomer':[1], 'Factory':[1], 'Galaxy':[1], 'PartyTime':[1],
+            'Bulwark':[1], 'Eradicator':[1], 'Commander':[1], 'SacredDuelist':[1], 'Oracle':[1]
         };
 
         const CHAMPS_DATA = [
@@ -1216,7 +1302,34 @@
             {jaName:'フィズ', kana:'ふぃず', img:'Fizz', cost: 3, traits:['Meeple', 'Rogue']}, {jaName:'イラオイ', kana:'いらおい', img:'Illaoi', cost: 3, traits:['Anima', 'Vanguard', 'Shepherd']}, {jaName:'カイ=サ', kana:'かいさ', img:'Kaisa', cost: 3, traits:['Dark Star', 'Rogue']},
             {jaName:'ルル', kana:'るる', img:'Lulu', cost: 3, traits:['Stargazer', 'Replicator']}, {jaName:'マオカイ', kana:'まおかい', img:'Maokai', cost: 3, traits:['N.O.V.A.', 'Brawler']}, {jaName:'ミス・フォーチュン', kana:'みすふぉーちゅん', img:'MissFortune', cost: 3, traits:['missfortuneuniquetrait']},
             {jaName:'オーン', kana:'おーん', img:'Ornn', cost: 3, traits:['Space Groove', 'Bastion']}, {jaName:'ラスート', kana:'らすーと', img:'Rhaast', cost: 3, traits:['Redeemer']}, {jaName:'サミーラ', kana:'さみーら', img:'Samira', cost: 3, traits:['Space Groove', 'Sniper']},
-            {jaName:'アーゴット', kana:'あーごっと', img:'Urgot', cost: 3, traits:['Mecha', 'Brawler', 'Marauder']}, {jaName:'ビクター', kana:'びくたー', img:'Viktor', cost: 3, traits:['Psionic', 'Channeler']}
+            {jaName:'アーゴット', kana:'あーごっと', img:'Urgot', cost: 3, traits:['Mecha', 'Brawler', 'Marauder']}, {jaName:'ビクター', kana:'びくたー', img:'Viktor', cost: 3, traits:['Psionic', 'Channeler']},
+            
+            // 4コスト
+            {jaName:'オレリオン・ソル', kana:'おれりおん', img:'AurelionSol', cost: 4, traits:['Mecha', 'Channeler']},
+            {jaName:'カルマ', kana:'かるま', img:'Karma', cost: 4, traits:['Dark Star', 'Voyager']},
+            {jaName:'キンドレッド', kana:'きんどれっど', img:'Kindred', cost: 4, traits:['N.O.V.A.', 'Challenger']},
+            {jaName:'コーキ', kana:'こーき', img:'Corki', cost: 4, traits:['Meeple', 'Fateweaver']},
+            {jaName:'ザヤ', kana:'ざや', img:'Xayah', cost: 4, traits:['Stargazer', 'Sniper']},
+            {jaName:'タム・ケンチ', kana:'たむけんち', img:'TahmKench', cost: 4, traits:['Oracle', 'Brawler']},
+            {jaName:'ナミ', kana:'なみ', img:'Nami', cost: 4, traits:['Space Groove', 'Replicator']},
+            {jaName:'ヌヌ＆ウィルンプ', kana:'ぬぬ', img:'Nunu', cost: 4, traits:['Stargazer', 'Vanguard']},
+            {jaName:'マイティーロボ', kana:'まいてぃー', img:'galio', cost: 4, traits:['Mecha', 'Voyager']},
+            {jaName:'マスター・イー', kana:'ますたーいー', img:'MasterYi', cost: 4, traits:['Psionic', 'Marauder']},
+            {jaName:'モルガナ', kana:'もるがな', img:'Morgana', cost: 4, traits:['DarkEmpress']},
+            {jaName:'ラムス', kana:'らむす', img:'Rammus', cost: 4, traits:['Meeple', 'Bastion']},
+            {jaName:'リヴェン', kana:'りゔぇん', img:'Riven', cost: 4, traits:['Timebreaker', 'Rogue']},
+            {jaName:'ルブラン', kana:'るぶらん', img:'Leblanc', cost: 4, traits:['Arbiter', 'Shepherd']},
+            
+            // 5コスト
+            {jaName:'ヴェックス', kana:'ゔぇっくす', img:'Vex', cost: 5, traits:['Doomer']},
+            {jaName:'グレイブス', kana:'ぐれいぶす', img:'Graves', cost: 5, traits:['Factory']},
+            {jaName:'シェン', kana:'しぇん', img:'Shen', cost: 5, traits:['Bulwark', 'Bastion']},
+            {jaName:'ジン', kana:'じん', img:'Jhin', cost: 5, traits:['Dark Star', 'Eradicator', 'Sniper']},
+            {jaName:'ゼド', kana:'ぜど', img:'Zed', cost: 5, traits:['Galaxy']},
+            {jaName:'ソナ', kana:'そな', img:'Sona', cost: 5, traits:['Commander', 'Psionic', 'Shepherd']},
+            {jaName:'バード', kana:'ばーど', img:'Bard', cost: 5, traits:['Meeple', 'Channeler']},
+            {jaName:'フィオラ', kana:'ふぃおら', img:'Fiora', cost: 5, traits:['SacredDuelist', 'Anima', 'Marauder']},
+            {jaName:'ブリッツクランク', kana:'ぶりっつくらんく', img:'Blitzcrank', cost: 5, traits:['PartyTime', 'Space Groove', 'Vanguard']}
         ];
 
         const ITEMS_DATA = [
@@ -1448,7 +1561,7 @@
         }
 
         function renderDrawerAssets() {
-            const champHtml = [1, 2, 3].map(cost => {
+            const champHtml = [1, 2, 3, 4, 5].map(cost => {
                 const champs = assetData.champ.filter(c => c.cost === cost);
                 if (champs.length === 0) return '';
                 return `<div class="drawer-section-title">${cost}コスト</div><div class="drawer-grid">` +
@@ -1683,6 +1796,194 @@
             block.content = JSON.stringify(boardData);
             saveToLocal(); renderMainArea();
         }
+
+        let draggingNodeInfo = null;
+        function startNodeDrag(e, roundId, blockId, nodeId) {
+            if (connectingSource && connectingSource.blockId === blockId) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (connectingSource.nodeId !== nodeId) {
+                    const round = db[currentStage].find(r => r.id === roundId);
+                    const block = round.blocks.find(b => b.id === blockId);
+                    let flowData = JSON.parse(block.content || '{"nodes":[],"edges":[]}');
+                    if (!flowData.edges) flowData.edges = [];
+                    const exists = flowData.edges.find(edge => (edge.from === connectingSource.nodeId && edge.to === nodeId) || (edge.from === nodeId && edge.to === connectingSource.nodeId));
+                    if (!exists) {
+                        flowData.edges.push({ from: connectingSource.nodeId, to: nodeId });
+                        block.content = JSON.stringify(flowData);
+                        saveToLocal();
+                        renderMainArea();
+                    }
+                }
+                const container = document.getElementById(`fc-${blockId}`);
+                if (container) container.classList.remove('linking-mode');
+                connectingSource = null;
+                return;
+            }
+
+            if (e.target.closest('.node-content') || e.target.closest('.node-action-bar') || e.target.closest('.resize-handle')) return;
+            e.preventDefault();
+            const nodeElement = document.getElementById(nodeId);
+            if (!nodeElement) return;
+            const container = nodeElement.parentElement;
+            const containerRect = container.getBoundingClientRect();
+            const nodeRect = nodeElement.getBoundingClientRect();
+            draggingNodeInfo = { roundId, blockId, nodeId, offsetX: e.clientX - nodeRect.left, offsetY: e.clientY - nodeRect.top, element: nodeElement, containerRect };
+            nodeElement.classList.add('dragging');
+            document.addEventListener('mousemove', handleNodeDrag);
+            document.addEventListener('mouseup', stopNodeDrag);
+        }
+        function handleNodeDrag(e) {
+            if (!draggingNodeInfo) return;
+            const { element, offsetX, offsetY, containerRect } = draggingNodeInfo;
+            let x = e.clientX - containerRect.left - offsetX;
+            let y = e.clientY - containerRect.top - offsetY;
+            x = Math.round(x / 15) * 15;
+            y = Math.round(y / 15) * 15;
+            element.style.left = `${x}px`;
+            element.style.top = `${y}px`;
+
+            const container = element.parentElement;
+            const currentMinHeight = parseInt(container.style.minHeight || 400);
+            if (y + element.offsetHeight + 80 > currentMinHeight) {
+                container.style.minHeight = `${y + element.offsetHeight + 80}px`;
+            }
+            drawAllFlowchartEdges();
+        }
+        function stopNodeDrag(e) {
+            if (!draggingNodeInfo) return;
+            const { roundId, blockId, nodeId, element } = draggingNodeInfo;
+            const newX = parseInt(element.style.left, 10);
+            const newY = parseInt(element.style.top, 10);
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let flowData = JSON.parse(block.content);
+            const node = flowData.nodes.find(n => n.id === nodeId);
+            if (node) { node.x = newX; node.y = newY; }
+            block.content = JSON.stringify(flowData);
+            saveToLocal();
+            element.classList.remove('dragging');
+            draggingNodeInfo = null;
+            document.removeEventListener('mousemove', handleNodeDrag);
+            document.removeEventListener('mouseup', stopNodeDrag);
+        }
+        function handleFlowchartDrop(e, roundId, blockId) {
+            e.preventDefault();
+            const dataStr = e.dataTransfer.getData('application/json');
+            if (!dataStr) return;
+            const container = e.currentTarget;
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            try {
+                const data = JSON.parse(dataStr);
+                if (data.source !== 'asset') return;
+                const round = db[currentStage].find(r => r.id === roundId);
+                const block = round.blocks.find(b => b.id === blockId);
+                let flowData = JSON.parse(block.content);
+                const newNode = { id: genId(), x: Math.round((x - 32) / 15) * 15, y: Math.round((y - 32) / 15) * 15, type: 'icon', content: data.url, width: 64, height: 64 };
+                flowData.nodes.push(newNode);
+                block.content = JSON.stringify(flowData);
+                saveToLocal();
+                renderMainArea();
+            } catch (err) {}
+        }
+        function addFlowchartTextNode(roundId, blockId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let flowData = JSON.parse(block.content);
+            const newNode = { id: genId(), x: 20, y: 20, type: 'text', content: 'テキストを入力', width: 120, height: 40 };
+            flowData.nodes.push(newNode);
+            block.content = JSON.stringify(flowData);
+            saveToLocal();
+            renderMainArea();
+        }
+        function updateFlowchartNodeContent(roundId, blockId, nodeId, newContent) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let flowData = JSON.parse(block.content);
+            const node = flowData.nodes.find(n => n.id === nodeId);
+            if (node) { node.content = newContent; }
+            block.content = JSON.stringify(flowData);
+            saveToLocal();
+        }
+        function deleteFlowchartNode(roundId, blockId, nodeId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let flowData = JSON.parse(block.content);
+            flowData.nodes = flowData.nodes.filter(n => n.id !== nodeId);
+            if (flowData.edges) {
+                flowData.edges = flowData.edges.filter(e => e.from !== nodeId && e.to !== nodeId);
+            }
+            block.content = JSON.stringify(flowData);
+            saveToLocal();
+            renderMainArea();
+        }
+
+        let connectingSource = null;
+        function startConnectNode(roundId, blockId, nodeId) {
+            connectingSource = { roundId, blockId, nodeId };
+            const container = document.getElementById(`fc-${blockId}`);
+            if (container) container.classList.add('linking-mode');
+        }
+
+        let resizingNodeInfo = null;
+        function startNodeResize(e, roundId, blockId, nodeId) {
+            e.preventDefault();
+            e.stopPropagation();
+            const nodeElement = document.getElementById(nodeId);
+            if (!nodeElement) return;
+            const startWidth = nodeElement.offsetWidth;
+            const startHeight = nodeElement.offsetHeight;
+            const startX = e.clientX;
+            const startY = e.clientY;
+            resizingNodeInfo = { roundId, blockId, nodeId, element: nodeElement, startWidth, startHeight, startX, startY };
+            document.addEventListener('mousemove', handleNodeResize);
+            document.addEventListener('mouseup', stopNodeResize);
+        }
+        function handleNodeResize(e) {
+            if (!resizingNodeInfo) return;
+            const { element, startWidth, startHeight, startX, startY } = resizingNodeInfo;
+            const newWidth = Math.max(32, startWidth + (e.clientX - startX));
+            const newHeight = Math.max(32, startHeight + (e.clientY - startY));
+            element.style.width = `${newWidth}px`;
+            element.style.height = `${newHeight}px`;
+
+            const container = element.parentElement;
+            const currentMinHeight = parseInt(container.style.minHeight || 400);
+            const y = parseInt(element.style.top || 0);
+            if (y + newHeight + 80 > currentMinHeight) {
+                container.style.minHeight = `${y + newHeight + 80}px`;
+            }
+            drawAllFlowchartEdges();
+        }
+        function stopNodeResize(e) {
+            if (!resizingNodeInfo) return;
+            const { roundId, blockId, nodeId, element } = resizingNodeInfo;
+            const newWidth = parseInt(element.style.width, 10);
+            const newHeight = parseInt(element.style.height, 10);
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let flowData = JSON.parse(block.content);
+            const node = flowData.nodes.find(n => n.id === nodeId);
+            if (node) { node.width = newWidth; node.height = newHeight; }
+            block.content = JSON.stringify(flowData);
+            saveToLocal();
+            resizingNodeInfo = null;
+            document.removeEventListener('mousemove', handleNodeResize);
+            document.removeEventListener('mouseup', stopNodeResize);
+        }
+
+        window.deleteFlowchartEdge = function(roundId, blockId, edgeIdx) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (!round) return;
+            const block = round.blocks.find(b => b.id === blockId);
+            if (!block) return;
+            let flowData = JSON.parse(block.content || '{"nodes":[],"edges":[]}');
+            if (flowData.edges) flowData.edges.splice(edgeIdx, 1);
+            block.content = JSON.stringify(flowData);
+            saveToLocal(); drawAllFlowchartEdges();
+        };
 
         let savedRange = null;
         document.addEventListener('selectionchange', () => {
@@ -1924,11 +2225,12 @@
             if (type === 'whiteboard') return '🖌️ スクショ＆手書き';
             if (type === 'tier') return '🏆 Tierリスト';
             if (type === 'board') return '♟️ 盤面配置';
+            if (type === 'flowchart') return '📊 フローチャート';
             return '';
         }
 
         function generateBlockHTML(block, roundId) {
-            const pId = `'${roundId}', '${block.id}'`;
+            const blockId = block.id;
             let contentHTML = '';
             const fmt = block.format || { fontSize: 13, fontWeight: 'normal', color: '' };
             const editorStyle = `font-size:${fmt.fontSize}px;font-weight:${fmt.fontWeight};${fmt.color ? 'color:' + fmt.color + ';' : ''}`;
@@ -1936,17 +2238,17 @@
             if (block.type === 'text' || block.type === 'good' || block.type === 'bad') {
                 contentHTML = `<div class="rich-editor" data-block-id="${block.id}" contenteditable="true" placeholder="メモを入力... (例: けいとりん と打つとアイコンになります)"
                     style="${editorStyle}"
-                    oninput="handleRichTextInput(event, this, ${pId})" onkeyup="handleRichTextInput(event, this, ${pId})"
-                    ondrop="setTimeout(()=>updateBlockContent(${pId}, this.innerHTML), 100)">${block.content || ''}</div>`;
+                    oninput="handleRichTextInput(event, this, '${roundId}', '${blockId}')" onkeyup="handleRichTextInput(event, this, '${roundId}', '${blockId}')"
+                    ondrop="setTimeout(()=>updateBlockContent('${roundId}', '${blockId}', this.innerHTML), 100)">${block.content || ''}</div>`;
             } else if (block.type === 'image') {
                 contentHTML = block.content
-                    ? `<div class="image-preview"><img src="${block.content}" alt="Image"></div><div style="margin-top:10px;text-align:center;"><input type="file" accept="image/*" onchange="handleImageUpload(event, ${pId})"></div>`
-                    : `<div class="image-upload-area"><input type="file" accept="image/*" onchange="handleImageUpload(event, ${pId})"><p style="margin-top:8px;">画像を選択してください</p></div>`;
+                    ? `<div class="image-preview"><img src="${block.content}" alt="Image"></div><div style="margin-top:10px;text-align:center;"><input type="file" accept="image/*" onchange="handleImageUpload(event, '${roundId}', '${blockId}')"></div>`
+                    : `<div class="image-upload-area"><input type="file" accept="image/*" onchange="handleImageUpload(event, '${roundId}', '${blockId}')"><p style="margin-top:8px;">画像を選択してください</p></div>`;
             } else if (block.type === 'whiteboard') {
                 let colorBtns = wbColors.map(color => `<button class="wb-color-btn color-btn-${block.id}" data-color="${color}" style="background:${color};" onclick="setWbColor('${block.id}', '${color}')"></button>`).join('');
                 contentHTML = `<div class="wb-toolbar-wrapper">
                     <div class="wb-actions">
-                        <label class="wb-action-btn primary" style="cursor:pointer;">🖼️ 背景を読み込む<input type="file" accept="image/*" style="display:none;" onchange="handleWbBgUpload(event, ${pId})"></label>
+                        <label class="wb-action-btn primary" style="cursor:pointer;">🖼️ 背景を読み込む<input type="file" accept="image/*" style="display:none;" onchange="handleWbBgUpload(event, '${roundId}', '${blockId}')"></label>
                         <button id="eraser-${block.id}" class="wb-action-btn" onclick="setWbEraser('${block.id}')">🧹 消しゴム</button>
                         <button class="wb-action-btn" onclick="wbUndo('${block.id}')">↩ 戻る</button>
                         <button class="wb-action-btn" onclick="wbRedo('${block.id}')">↪ 進む</button>
@@ -1959,28 +2261,28 @@
                 const tierData = JSON.parse(block.content || '[]');
                 let tierHtml = `<div class="tier-list" id="tier-${block.id}">`;
                 tierData.forEach(t => {
-                    tierHtml += `<div class="tier-row" data-tier-id="${t.id}" ondragover="event.preventDefault(); this.style.background='var(--surface-3)';" ondragleave="this.style.background='var(--surface)';" ondrop="handleTierDrop(event, ${pId}, '${t.id}')">
+                    tierHtml += `<div class="tier-row" data-tier-id="${t.id}" ondragover="event.preventDefault(); this.style.background='var(--surface-3)';" ondragleave="this.style.background='var(--surface)';" ondrop="handleTierDrop(event, '${roundId}', '${blockId}', '${t.id}')">
                         <div class="tier-label-box" style="background:${t.color};">
-                            <div contenteditable="true" onblur="updateTierLabel(${pId}, '${t.id}', this.innerText)">${t.label}</div>
-                            <input type="color" class="tier-color-picker" value="${t.color}" onchange="updateTierColor(${pId}, '${t.id}', this.value)" title="色を変更">
+                            <div contenteditable="true" onblur="updateTierLabel('${roundId}', '${blockId}', '${t.id}', this.innerText)">${t.label}</div>
+                            <input type="color" class="tier-color-picker" value="${t.color}" onchange="updateTierColor('${roundId}', '${blockId}', '${t.id}', this.value)" title="色を変更">
                         </div>
                         <div class="tier-items">
                             ${t.items.map((item, itemIdx) => {
                                 if (typeof item === 'string') item = { url: item, name: findNameByUrl(item) };
-                                return `<div class="tier-item" draggable="true" ondragstart="handleTierItemDragStart(event, ${pId}, '${t.id}', ${itemIdx})">
+                                return `<div class="tier-item" draggable="true" ondragstart="handleTierItemDragStart(event, '${roundId}', '${blockId}', '${t.id}', ${itemIdx})">
                                     <img src="${item.url}"><div class="tier-item-name">${item.name}</div>
-                                    <button class="del-btn" onclick="removeTierItem(${pId}, '${t.id}', ${itemIdx})">×</button>
+                                    <button class="del-btn" onclick="removeTierItem('${roundId}', '${blockId}', '${t.id}', ${itemIdx})">×</button>
                                 </div>`;
                             }).join('')}
                         </div>
                         <div class="tier-row-controls">
-                            <button class="tier-row-btn" onclick="moveTierRow(${pId}, '${t.id}', -1)" title="上へ">▲</button>
-                            <button class="tier-row-btn" onclick="removeTierRow(${pId}, '${t.id}')" title="削除">×</button>
-                            <button class="tier-row-btn" onclick="moveTierRow(${pId}, '${t.id}', 1)" title="下へ">▼</button>
+                            <button class="tier-row-btn" onclick="moveTierRow('${roundId}', '${blockId}', '${t.id}', -1)" title="上へ">▲</button>
+                            <button class="tier-row-btn" onclick="removeTierRow('${roundId}', '${blockId}', '${t.id}')" title="削除">×</button>
+                            <button class="tier-row-btn" onclick="moveTierRow('${roundId}', '${blockId}', '${t.id}', 1)" title="下へ">▼</button>
                         </div>
                     </div>`;
                 });
-                tierHtml += `<button class="tier-add-row" onclick="addTierRow(${pId})">＋ 行を追加</button></div>`;
+                tierHtml += `<button class="tier-add-row" onclick="addTierRow('${roundId}', '${blockId}')">＋ 行を追加</button></div>`;
                 contentHTML = tierHtml;
             } else if (block.type === 'board') {
                 const boardData = JSON.parse(block.content || '[]');
@@ -2013,11 +2315,11 @@
                 activeTraits.sort((a, b) => b.count - a.count);
 
                 let traitsHtml = `<div class="board-traits-panel"><div class="board-traits-title">ACTIVE TRAITS</div>`;
-                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: var(--ink-xlight); text-align: center;">なし</div>`;
+                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 9px; color: var(--ink-xlight); text-align: center;">なし</div>`;
                 else activeTraits.forEach(at => { traitsHtml += `<div class="board-trait-item"><span class="board-trait-name">${at.name}</span><span class="board-trait-count">${at.count}</span></div>`; });
                 traitsHtml += `</div>`;
 
-                let boardHtml = `<div class="board-container"><div class="board-grid">`;
+                let boardHtml = `<div class="board-container">${traitsHtml}<div class="board-grid">`;
                 for(let row = 0; row < 4; row++) {
                     boardHtml += `<div class="board-row ${row % 2 === 1 ? 'odd' : ''}">`;
                     for(let col = 0; col < 7; col++) {
@@ -2033,16 +2335,51 @@
                                 hexStrokeWidth = '3';
                             }
                         }
-                        boardHtml += `<div class="board-hex-cell" ondragover="event.preventDefault(); this.classList.add('drag-over');" ondragleave="this.classList.remove('drag-over');" ondrop="this.classList.remove('drag-over'); handleBoardDrop(event, ${pId}, ${idx})"><svg class="board-hex-bg" viewBox="0 0 78 78"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20" style="stroke: ${hexStroke}; stroke-width: ${hexStrokeWidth};"></polygon></svg>`;
+                        boardHtml += `<div class="board-hex-cell" ondragover="event.preventDefault(); this.classList.add('drag-over');" ondragleave="this.classList.remove('drag-over');" ondrop="this.classList.remove('drag-over'); handleBoardDrop(event, '${roundId}', '${blockId}', ${idx})"><svg class="board-hex-bg" viewBox="0 0 78 78"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20" style="stroke: ${hexStroke}; stroke-width: ${hexStrokeWidth};"></polygon></svg>`;
                         if (cell) {
-                            boardHtml += `<div class="board-hex-champ" draggable="true" ondragstart="handleBoardItemDragStart(event, ${pId}, ${idx}, '${cell.champ}')"><img src="${cell.champ}" class="board-hex-champ-img"><div class="board-hex-champ-overlay"></div><div class="board-hex-items">${(cell.items || []).map((itUrl, iIdx) => `<img src="${itUrl}" class="board-hex-item" onclick="removeBoardItem(event, ${pId}, ${idx}, ${iIdx})" title="クリックでアイテム削除">`).join('')}</div></div><div class="board-hex-del-btn" onclick="removeBoardChamp(${pId}, ${idx})" title="駒を削除">×</div>`;
+                            boardHtml += `<div class="board-hex-champ" draggable="true" ondragstart="handleBoardItemDragStart(event, '${roundId}', '${blockId}', ${idx}, '${cell.champ}')"><img src="${cell.champ}" class="board-hex-champ-img"><div class="board-hex-champ-overlay"></div><div class="board-hex-items">${(cell.items || []).map((itUrl, iIdx) => `<img src="${itUrl}" class="board-hex-item" onclick="removeBoardItem(event, '${roundId}', '${blockId}', ${idx}, ${iIdx})" title="クリックでアイテム削除">`).join('')}</div></div><div class="board-hex-del-btn" onclick="removeBoardChamp('${roundId}', '${blockId}', ${idx})" title="駒を削除">×</div>`;
                         }
                         boardHtml += `</div>`;
                     }
                     boardHtml += `</div>`;
                 }
-                boardHtml += `</div>${traitsHtml}</div><div style="font-size:11px; color:var(--ink-xlight); text-align:center; margin-top:8px;">※アイテムは駒の上にドロップ。アイテムクリックで削除。</div>`;
+                boardHtml += `</div><div class="board-spacer"></div></div><div style="font-size:11px; color:var(--ink-xlight); text-align:center; margin-top:8px;">※アイテムは駒の上にドロップ。アイテムクリックで削除。</div>`;
                 contentHTML = boardHtml;
+            } else if (block.type === 'flowchart') {
+                const flowData = JSON.parse(block.content || '{"nodes":[],"edges":[]}');
+                let maxBottom = 400;
+                let nodesHtml = '';
+                flowData.nodes.forEach(node => {
+                    let nodeInnerHtml = '';
+                    let nodeClasses = 'flowchart-node';
+                    if (node.type === 'icon') {
+                        nodeInnerHtml = `<img src="${node.content}" alt="icon">`;
+                        nodeClasses += ' flowchart-node-icon';
+                    } else {
+                        nodeInnerHtml = `<div class="node-content" contenteditable="true" onblur="updateFlowchartNodeContent('${roundId}', '${blockId}', '${node.id}', this.innerText)">${node.content}</div>`;
+                        nodeClasses += ' flowchart-node-text';
+                    }
+                    
+                    let actionBtns = '';
+                    actionBtns += `<button class="fc-btn" onclick="startConnectNode('${roundId}', '${blockId}', '${node.id}')" title="線を繋ぐ">🔗</button>`;
+                    actionBtns += `<button class="fc-btn del" onclick="deleteFlowchartNode('${roundId}', '${blockId}', '${node.id}')" title="削除">×</button>`;
+
+                    nodesHtml += `<div id="${node.id}" class="${nodeClasses}" style="left:${node.x || 0}px; top:${node.y || 0}px; width:${node.width ? node.width+'px' : 'auto'}; height:${node.height ? node.height+'px' : 'auto'}; z-index:1;" onmousedown="startNodeDrag(event, '${roundId}', '${blockId}', '${node.id}')">
+                        ${nodeInnerHtml}
+                        <div class="node-action-bar">${actionBtns}</div>
+                        <div class="resize-handle" onmousedown="startNodeResize(event, '${roundId}', '${blockId}', '${node.id}')"></div>
+                    </div>`;
+                });
+                contentHTML = `
+                    <div class="flowchart-toolbar">
+                        <button class="add-block-btn" onclick="addFlowchartTextNode('${roundId}', '${blockId}')">＋ テキスト追加</button>
+                        <span style="font-size:11px; margin-left:10px; color:var(--ink-light); display:flex; align-items:center;">※ 🔗ボタンを押してから別の要素をクリックで線を引きます。線をクリックで削除。</span>
+                    </div>
+                    <div class="flowchart-container" id="fc-${blockId}" data-round-id="${roundId}" data-block-id="${blockId}" ondragover="event.preventDefault()" ondrop="handleFlowchartDrop(event, '${roundId}', '${blockId}')" style="min-height: ${maxBottom}px;">
+                        <svg class="flowchart-edges" id="svg-${blockId}" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;"></svg>
+                        ${nodesHtml}
+                    </div>
+                `;
             }
 
             const isTextBlock = (block.type === 'text' || block.type === 'good' || block.type === 'bad');
@@ -2050,16 +2387,16 @@
                 <div class="format-controls">
                     <label class="fmt-label">サイズ</label>
                     <input class="fmt-size" type="number" min="8" max="48" value="${fmt.fontSize || 13}" title="フォントサイズ(px)"
-                        onchange="updateBlockFormat(${pId}, 'fontSize', parseInt(this.value))">
+                        onchange="updateBlockFormat('${roundId}', '${blockId}', 'fontSize', parseInt(this.value))">
                     <label class="fmt-label">太さ</label>
-                    <select class="fmt-select" title="フォントウェイト" onchange="updateBlockFormat(${pId}, 'fontWeight', this.value)">
+                    <select class="fmt-select" title="フォントウェイト" onchange="updateBlockFormat('${roundId}', '${blockId}', 'fontWeight', this.value)">
                         <option value="normal" ${fmt.fontWeight === 'normal' ? 'selected' : ''}>標準</option>
                         <option value="bold" ${fmt.fontWeight === 'bold' ? 'selected' : ''}>太字</option>
                     </select>
                     <label class="fmt-label">色</label>
                     <input class="fmt-color" type="color" value="${fmt.color || '#1C2333'}" title="フォントカラー"
-                        onchange="updateBlockFormat(${pId}, 'color', this.value)">
-                    <button class="fmt-reset" onclick="resetBlockFormat(${pId})" title="書式リセット">↺</button>
+                        onchange="updateBlockFormat('${roundId}', '${blockId}', 'color', this.value)">
+                    <button class="fmt-reset" onclick="resetBlockFormat('${roundId}', '${blockId}')" title="書式リセット">↺</button>
                 </div>` : '';
 
             const displayLabel = block.label !== null && block.label !== undefined ? block.label : getBlockLabel(block.type);
@@ -2067,12 +2404,12 @@
             return `
             <div class="block-item type-${block.type}">
                 <div class="block-toolbar">
-                    <input class="block-label-input" type="text" value="${displayLabel}" placeholder="${getBlockLabel(block.type)}" onchange="updateBlockLabel(${pId}, this.value)" title="クリックして名前を編集">
+                    <input class="block-label-input" type="text" value="${displayLabel}" placeholder="${getBlockLabel(block.type)}" onchange="updateBlockLabel('${roundId}', '${blockId}', this.value)" title="クリックして名前を編集">
                     ${formatControls}
                     <div class="block-actions">
-                        <button class="action-btn" onclick="moveBlock(${pId}, 'up')" title="上へ">↑</button>
-                        <button class="action-btn" onclick="moveBlock(${pId}, 'down')" title="下へ">↓</button>
-                        <button class="action-btn delete" onclick="deleteBlock(${pId})">×</button>
+                        <button class="action-btn" onclick="moveBlock('${roundId}', '${blockId}', 'up')" title="上へ">↑</button>
+                        <button class="action-btn" onclick="moveBlock('${roundId}', '${blockId}', 'down')" title="下へ">↓</button>
+                        <button class="action-btn delete" onclick="deleteBlock('${roundId}', '${blockId}')">×</button>
                     </div>
                 </div>
                 <div class="block-content">${contentHTML}</div>
@@ -2177,13 +2514,44 @@
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'whiteboard')">＋ 手書き</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'tier')">＋ Tierリスト</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'board')">＋ 盤面</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'flowchart')">＋ フローチャート</button>
                     </div>
                 </div>`;
             });
 
             mainContent.innerHTML = html;
-            setTimeout(initWhiteboards, 0);
+            setTimeout(() => {
+                initWhiteboards();
+                drawAllFlowchartEdges();
+            }, 0);
         }
+
+        window.drawAllFlowchartEdges = function() {
+            document.querySelectorAll('.flowchart-container').forEach(container => {
+                const roundId = container.dataset.roundId;
+                const blockId = container.dataset.blockId;
+                if (!roundId || !blockId) return;
+                const round = db[currentStage]?.find(r => r.id === roundId);
+                const block = round?.blocks.find(b => b.id === blockId);
+                if (!block) return;
+                const flowData = JSON.parse(block.content || '{"nodes":[],"edges":[]}');
+                const svg = document.getElementById(`svg-${blockId}`);
+                if (!svg || !flowData.edges) return;
+                let svgHtml = '';
+                const cRect = container.getBoundingClientRect();
+                flowData.edges.forEach((edge, idx) => {
+                    const el1 = document.getElementById(edge.from);
+                    const el2 = document.getElementById(edge.to);
+                    if (el1 && el2) {
+                        const r1 = el1.getBoundingClientRect(); const r2 = el2.getBoundingClientRect();
+                        const x1 = r1.left - cRect.left + r1.width / 2; const y1 = r1.top - cRect.top + r1.height / 2;
+                        const x2 = r2.left - cRect.left + r2.width / 2; const y2 = r2.top - cRect.top + r2.height / 2;
+                        svgHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink-light)" stroke-width="2" pointer-events="auto" cursor="pointer" onclick="deleteFlowchartEdge('${roundId}', '${blockId}', ${idx})" title="クリックで削除" />`;
+                    }
+                });
+                svg.innerHTML = svgHtml;
+            });
+        };
 
         function showSummary() {
             if (!appData.currentId) { alert('出力するノートを選択してください。'); return; }
@@ -2235,11 +2603,33 @@
                                     tHtml += `<div style="display: flex; background: var(--surface); min-height: 44px;"><div style="width: 60px; background: ${t.color}; display: flex; align-items: center; justify-content: center; font-weight: bold; border-right: 1px solid var(--border);">${t.label}</div><div style="flex: 1; padding: 6px; display: flex; flex-wrap: wrap; gap: 6px;">${t.items.map(item => {
                                         const url = typeof item === 'string' ? item : item.url;
                                         const name = typeof item === 'string' ? findNameByUrl(url) : item.name;
-                                        return `<div style="display:flex; flex-direction:column; align-items:center; width: 40px;"><img src="${url}" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;"><div style="font-size:8px; color: var(--ink-light); text-align:center; line-height:1.1; margin-top:2px; word-break:break-all;">${name}</div></div>`;
+                                        return `<div style="display:flex; flex-direction:column; align-items:center; width: 40px;"><img src="${url}" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;"><div style="font-size:5px; color: var(--ink-light); text-align:center; line-height:1.1; margin-top:2px; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div></div>`;
                                     }).join('')}</div></div>`;
                                 });
                                 tHtml += `</div></div>`;
                                 stageHTML += tHtml;
+                            }
+                            if (b.type === 'flowchart') {
+                                const flowData = JSON.parse(b.content || '{"nodes":[],"edges":[]}');
+                                let maxBottom = 300;
+                                flowData.nodes.forEach(n => {
+                                    const h = n.height || (n.type === 'icon' ? 64 : 40);
+                                    const btm = (n.y || 0) + h;
+                                    if (btm + 60 > maxBottom) maxBottom = btm + 60;
+                                });
+                                let fHtml = `<div class="sum-block">${labelHtml}<div class="flowchart-container" data-round-id="${round.id}" data-block-id="${b.id}" style="position:relative; min-height:${maxBottom}px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden;">`;
+                                fHtml += `<svg class="flowchart-edges" id="svg-${b.id}" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;"></svg>`;
+                                flowData.nodes.forEach(node => {
+                                    let nodeInnerHtml = '';
+                                    if (node.type === 'icon') {
+                                        nodeInnerHtml = `<img src="${node.content}" style="width:100%; height:100%; object-fit:cover;">`;
+                                    } else {
+                                        nodeInnerHtml = `<div style="padding:8px; font-size:11px; width:100%; height:100%; overflow:hidden;">${node.content}</div>`;
+                                    }
+                                    fHtml += `<div id="${node.id}" style="position:absolute; left:${node.x || 0}px; top:${node.y || 0}px; width:${node.width ? node.width+'px' : 'auto'}; height:${node.height ? node.height+'px' : 'auto'}; background:var(--surface); border:1px solid var(--border-strong); border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); z-index:1; display:flex; align-items:center; justify-content:center;">${nodeInnerHtml}</div>`;
+                                });
+                                fHtml += `</div></div>`;
+                                stageHTML += fHtml;
                             }
                             if (b.type === 'board') {
                                 const boardData = JSON.parse(b.content || '[]');
@@ -2269,13 +2659,13 @@
                                 }
                                 activeTraits.sort((a, b) => b.count - a.count);
 
-                                let traitsHtml = `<div style="width: 140px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 6px;">`;
-                                traitsHtml += `<div style="font-size: 11px; color: var(--gold-dim); font-weight: bold; text-align: center; margin-bottom: 6px; letter-spacing: 1px;">ACTIVE TRAITS</div>`;
-                                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: var(--ink-xlight); text-align: center;">なし</div>`;
-                                else activeTraits.forEach(at => { traitsHtml += `<div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px;"><span style="font-size: 11px; color: var(--ink); font-weight: 600;">${at.name}</span><span style="font-size: 11px; color: var(--navy); font-weight: 700; background: var(--gold-pale); border: 1px solid var(--gold-light); padding: 0 5px; border-radius: 4px;">${at.count}</span></div>`; });
+                                let traitsHtml = `<div style="width: 100px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap: 4px;">`;
+                                traitsHtml += `<div style="font-size: 6px; color: var(--gold-dim); font-weight: bold; text-align: center; margin-bottom: 4px; letter-spacing: 1px;">ACTIVE TRAITS</div>`;
+                                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 5px; color: var(--ink-xlight); text-align: center;">なし</div>`;
+                                else activeTraits.forEach(at => { traitsHtml += `<div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); border: 1px solid var(--border); padding: 2px 4px; border-radius: 3px;"><span style="font-size: 5px; color: var(--ink); font-weight: 600;">${at.name}</span><span style="font-size: 5px; color: var(--navy); font-weight: 700; background: var(--gold-pale); border: 1px solid var(--gold-light); padding: 0 4px; border-radius: 3px;">${at.count}</span></div>`; });
                                 traitsHtml += `</div>`;
 
-                                let bHtml = `<div class="sum-block">${labelHtml}<div style="background: var(--surface-2); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); display: flex; gap: 20px; align-items: flex-start; justify-content: center;"><div style="display: flex; flex-direction: column; gap: 2px;">`;
+                                let bHtml = `<div class="sum-block">${labelHtml}<div style="background: var(--surface-2); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: flex-start;">${traitsHtml}<div style="display: flex; flex-direction: column; gap: 2px; margin: 0 auto;">`;
                                 for(let row = 0; row < 4; row++) {
                                     bHtml += `<div style="display: flex; gap: 2px; ${row % 2 === 1 ? 'margin-left: 20px;' : ''}">`;
                                     for(let col = 0; col < 7; col++) {
@@ -2305,7 +2695,7 @@
                                     }
                                     bHtml += `</div>`;
                                 }
-                                bHtml += `</div>${traitsHtml}</div></div>`;
+                                bHtml += `</div><div style="width: 100px; flex-shrink: 0;"></div></div></div>`;
                                 stageHTML += bHtml;
                             }
                         });
@@ -2319,6 +2709,7 @@
             if (!hasData) html += `<p style="color:var(--ink-xlight);">まだ記録されたフィードバックがありません。</p>`;
             html += `</div>`;
             mainContent.innerHTML = html;
+            setTimeout(drawAllFlowchartEdges, 0);
         }
 
         loadFromLocal();
