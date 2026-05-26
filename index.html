@@ -17,23 +17,44 @@
         .summary-btn { margin-top: auto; background-color: #00b894; color: white; font-weight: bold; }
         .summary-btn.active { background-color: #009477; }
 
-        /* メインコンテンツ */
-        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; position: relative; }
+        /* メインコンテンツ（ボトムバーの分だけ下部余白を追加） */
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; position: relative; padding-bottom: 100px; }
         .main-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dfe4ea; padding-bottom: 15px; margin-bottom: 25px; }
         .main-header h1 { margin: 0; font-size: 2rem; color: #2d3436; }
-        .header-actions { display: flex; gap: 10px; }
         
+        /* 🌟 ボトム・ナビゲーションバー（画面下部固定） */
+        .bottom-action-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%); /* サイドバーがあるためJavaScriptで動的に位置調整します */
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 25px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 15px;
+            z-index: 50;
+            border: 1px solid rgba(223, 228, 234, 0.8);
+            transition: 0.3s;
+        }
+        /* レポート画面ではボトムバーを隠す用 */
+        .bottom-action-bar.hidden { display: none; }
+
+        /* 汎用ボタン */
+        .btn { border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px; font-size: 1rem;}
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .btn:active { transform: translateY(0); }
+        .btn-yellow { background-color: #eccc68; color: #2f3542; } .btn-yellow:hover { background-color: #ffa502; }
+        .btn-blue { background-color: #0984e3; color: white; } .btn-blue:hover { background-color: #076aba; }
+
         /* コンテナ（ラウンド枠） */
         .note-container { background-color: #ffffff; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #f1f2f6; border-left: 5px solid #0984e3; }
         .container-header { display: flex; align-items: center; margin-bottom: 20px; gap: 10px; }
         .container-header h3 { margin: 0; color: #2d3436; display: flex; align-items: center; gap: 8px; font-size: 1rem;}
         .container-header input[type="text"] { font-size: 1.2rem; font-weight: bold; padding: 5px 10px; border: 1px solid #dfe4ea; border-radius: 6px; width: 250px; color: #0984e3; }
         .delete-round-btn { margin-left: auto; background-color: #ff7675; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
-        
-        /* 汎用ボタン */
-        .btn { border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 5px; }
-        .btn-yellow { background-color: #eccc68; color: #2f3542; } .btn-yellow:hover { background-color: #ffa502; }
-        .btn-blue { background-color: #0984e3; color: white; } .btn-blue:hover { background-color: #076aba; }
 
         /* ブロックUI */
         .block-list { display: flex; flex-direction: column; gap: 15px; }
@@ -105,7 +126,7 @@
 
         @media print {
             body { background: #fff; overflow: visible; height: auto; }
-            .sidebar, .print-btn, .header-actions, .asset-drawer { display: none !important; }
+            .sidebar, .print-btn, .bottom-action-bar, .asset-drawer { display: none !important; }
             .main-content { padding: 0; overflow: visible; }
             .summary-view { box-shadow: none; padding: 0; }
             .summary-stage, .sum-block { page-break-inside: avoid; }
@@ -122,6 +143,11 @@
     </div>
 
     <div class="main-content" id="main-content"></div>
+
+    <div id="bottom-action-bar" class="bottom-action-bar">
+        <button class="btn btn-blue" onclick="toggleDrawer()">🎒 アセットパネル</button>
+        <button class="btn btn-yellow" onclick="addRound()">＋ 枠を追加 (ラウンド/メモ)</button>
+    </div>
 
     <div id="asset-drawer" class="asset-drawer">
         <div class="drawer-header">
@@ -156,6 +182,19 @@
             else { initDB(); db['Stage 2'].push(createRound('ステージ2 全体方針')); db['Stage 3'].push(createRound('3-2')); }
         }
 
+        // --- ボトムバーの位置調整 ---
+        // サイドバー(240px + padding)があるため、画面全体の中央ではなく「メインコンテンツの中央」に配置する
+        function adjustBottomBarPosition() {
+            const bottomBar = document.getElementById('bottom-action-bar');
+            const mainContent = document.querySelector('.main-content');
+            if (bottomBar && mainContent) {
+                // 左側のサイドバー幅（280px）を考慮して中心を計算
+                const mainWidth = window.innerWidth - 280;
+                bottomBar.style.left = `calc(280px + ${mainWidth / 2}px)`;
+            }
+        }
+        window.addEventListener('resize', adjustBottomBarPosition);
+
         // --- アセットデータ（画像URLリスト） ---
         const assetData = {
             champ: [
@@ -178,64 +217,42 @@
             ]
         };
 
-        // 🌟 新機能：テキスト変換辞書（ここにキーワードとアイコンのペアを追加します）
         const iconDict = {
-            'ケイトリン': assetData.champ[0],
-            'けいとりん': assetData.champ[0],
-            'モルガナ': assetData.champ[1],
-            'もるがな': assetData.champ[1],
-            'ティーモ': assetData.champ[2],
-            'てぃーも': assetData.champ[2],
-            'サミーラ': assetData.champ[3],
-            'さみーら': assetData.champ[3],
-            'アーリ': assetData.champ[4],
-            'あーり': assetData.champ[4],
-            
-            'bf': assetData.item[0],
-            'BF': assetData.item[0],
-            '剣': assetData.item[0],
-            '涙': assetData.item[1],
-            'なみだ': assetData.item[1],
-            'ie': assetData.item[2],
-            'IE': assetData.item[2],
-            'ショウジン': assetData.item[3],
-            'しょうじん': assetData.item[3]
+            'ケイトリン': assetData.champ[0], 'けいとりん': assetData.champ[0],
+            'モルガナ': assetData.champ[1], 'もるがな': assetData.champ[1],
+            'ティーモ': assetData.champ[2], 'てぃーも': assetData.champ[2],
+            'サミーラ': assetData.champ[3], 'さみーら': assetData.champ[3],
+            'アーリ': assetData.champ[4], 'あーり': assetData.champ[4],
+            'bf': assetData.item[0], 'BF': assetData.item[0], '剣': assetData.item[0],
+            '涙': assetData.item[1], 'なみだ': assetData.item[1],
+            'ie': assetData.item[2], 'IE': assetData.item[2],
+            'ショウジン': assetData.item[3], 'しょうじん': assetData.item[3]
         };
 
-        // --- テキスト変換（オートコンプリート）ロジック ---
-        // IME（日本語入力）の確定中かどうかを判定するフラグ
+        // --- テキスト変換（オートコンプリート） ---
         let isComposing = false;
         document.addEventListener('compositionstart', () => isComposing = true);
         document.addEventListener('compositionend', () => isComposing = false);
 
         function handleRichTextInput(e, editorEle, roundId, blockId) {
-            // 日本語入力中（変換候補を選んでいる最中）は処理しない
             if (isComposing) return;
-
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
             const range = selection.getRangeAt(0);
             const node = range.startContainer;
             
-            // カーソルがテキストノードの上にある場合のみ実行
             if (node.nodeType === Node.TEXT_NODE) {
                 let text = node.textContent;
                 let cursorOffset = range.startOffset;
-                
-                // カーソルの直前までの文字を取得
                 const textBeforeCursor = text.substring(0, cursorOffset);
                 
-                // 辞書と照らし合わせる
                 for (let key in iconDict) {
                     if (textBeforeCursor.endsWith(key)) {
                         const url = iconDict[key];
-                        
-                        // 入力されたキーワードを削除
                         const textAfterCursor = text.substring(cursorOffset);
                         const newTextBefore = textBeforeCursor.substring(0, textBeforeCursor.length - key.length);
                         node.textContent = newTextBefore;
                         
-                        // 代わりにアイコン画像を生成して挿入
                         const img = document.createElement('img');
                         img.src = url;
                         img.className = 'inline-icon';
@@ -245,18 +262,15 @@
                         node.parentNode.insertBefore(img, node.nextSibling);
                         node.parentNode.insertBefore(afterTextNode, img.nextSibling);
                         
-                        // カーソルを挿入したアイコンの直後に移動させる
                         const newRange = document.createRange();
                         newRange.setStart(afterTextNode, 0);
                         newRange.collapse(true);
                         selection.removeAllRanges();
                         selection.addRange(newRange);
-                        
-                        break; // 1回変換したらループ終了
+                        break; 
                     }
                 }
             }
-            // データをセーブ
             updateBlockContent(roundId, blockId, editorEle.innerHTML);
         }
 
@@ -287,6 +301,12 @@
             const round = db[currentStage].find(r => r.id === roundId);
             if (round) round.blocks.push(createBlock(blockType));
             saveToLocal(); renderMainArea();
+            
+            // 枠を追加したときに、一番下までスクロールさせる
+            setTimeout(() => {
+                const mainContent = document.getElementById('main-content');
+                mainContent.scrollTo({ top: mainContent.scrollHeight, behavior: 'smooth' });
+            }, 100);
         }
         function deleteBlock(roundId, blockId) {
             const round = db[currentStage].find(r => r.id === roundId);
@@ -308,7 +328,17 @@
                 if (block) { block.content = content; saveToLocal(); }
             }
         }
-        function addRound() { db[currentStage].push(createRound('')); saveToLocal(); renderMainArea(); }
+        function addRound() { 
+            db[currentStage].push(createRound('')); 
+            saveToLocal(); 
+            renderMainArea(); 
+            
+            // 新規ラウンド追加時に自動スクロール
+            setTimeout(() => {
+                const mainContent = document.getElementById('main-content');
+                mainContent.scrollTo({ top: mainContent.scrollHeight, behavior: 'smooth' });
+            }, 100);
+        }
         function deleteRound(roundId) { if(confirm('この枠を削除しますか？')) { db[currentStage] = db[currentStage].filter(r => r.id !== roundId); saveToLocal(); renderMainArea(); } }
         function updateRoundName(roundId, name) { const round = db[currentStage].find(r => r.id === roundId); if(round) { round.name = name; saveToLocal(); } }
 
@@ -408,8 +438,28 @@
         }
         window.setWbColor = function(blockId, color) { canvases[blockId].color = color; canvases[blockId].isEraser = false; updateWbUI(blockId); }
         window.setWbEraser = function(blockId) { canvases[blockId].isEraser = true; updateWbUI(blockId); }
-        window.wbUndo = function(id) { /* Undo Logic handled in previous block, omitted for brevity but logic is active */ }
-        window.wbRedo = function(id) { /* Redo Logic */ }
+        window.wbUndo = function(id) {
+            const cvs = canvases[id];
+            if (cvs.undoStack.length > 1) {
+                cvs.redoStack.push(cvs.undoStack.pop());
+                const prevState = cvs.undoStack[cvs.undoStack.length - 1];
+                const img = new Image();
+                img.onload = () => { cvs.ctx.clearRect(0, 0, cvs.canvas.width, cvs.canvas.height); cvs.ctx.drawImage(img, 0, 0); };
+                img.src = prevState;
+                updateBlockContent(cvs.roundId, cvs.blockId, prevState);
+            }
+        }
+        window.wbRedo = function(id) {
+            const cvs = canvases[id];
+            if (cvs.redoStack.length > 0) {
+                const nextState = cvs.redoStack.pop();
+                cvs.undoStack.push(nextState);
+                const img = new Image();
+                img.onload = () => { cvs.ctx.clearRect(0, 0, cvs.canvas.width, cvs.canvas.height); cvs.ctx.drawImage(img, 0, 0); };
+                img.src = nextState;
+                updateBlockContent(cvs.roundId, cvs.blockId, nextState);
+            }
+        }
         window.clearWb = function(blockId) {
             if(confirm('白紙に戻しますか？')) {
                 const cvs = canvases[blockId]; cvs.ctx.fillStyle = '#ffffff'; cvs.ctx.fillRect(0, 0, cvs.canvas.width, cvs.canvas.height);
@@ -438,7 +488,6 @@
             let contentHTML = '';
 
             if (block.type === 'text' || block.type === 'good' || block.type === 'bad') {
-                // 📝 変更点：oninputで handleRichTextInput を呼び出すように変更
                 contentHTML = `<div class="rich-editor" contenteditable="true" placeholder="メモを入力... (例: けいとりん と打つとアイコンになります)" 
                                 oninput="handleRichTextInput(event, this, ${pId})" 
                                 onkeyup="handleRichTextInput(event, this, ${pId})"
@@ -448,7 +497,7 @@
                                             : `<div class="image-upload-area"><input type="file" accept="image/*" onchange="handleImageUpload(event, ${pId})"><p>画像を選択してください</p></div>`;
             } else if (block.type === 'whiteboard') {
                 let colorBtns = wbColors.map(color => `<button class="wb-color-btn color-btn-${block.id}" data-color="${color}" style="background:${color};" onclick="setWbColor('${block.id}', '${color}')"></button>`).join('');
-                contentHTML = `<div class="wb-toolbar-wrapper"><div class="wb-actions"><label class="wb-action-btn primary" style="cursor:pointer;">🖼️ 背景画像を読み込む<input type="file" accept="image/*" style="display:none;" onchange="handleWbBgUpload(event, ${pId})"></label><button id="eraser-${block.id}" class="wb-action-btn" onclick="setWbEraser('${block.id}')">🧹 消しゴム</button><button class="wb-action-btn clear" onclick="clearWb('${block.id}')">🗑️ 白紙に戻す</button></div><div class="wb-colors">${colorBtns}</div></div><div class="wb-canvas-container"><canvas class="whiteboard" data-block-id="${block.id}" data-round-id="${roundId}"></canvas></div>`;
+                contentHTML = `<div class="wb-toolbar-wrapper"><div class="wb-actions"><label class="wb-action-btn primary" style="cursor:pointer;">🖼️ 背景画像を読み込む<input type="file" accept="image/*" style="display:none;" onchange="handleWbBgUpload(event, ${pId})"></label><button id="eraser-${block.id}" class="wb-action-btn" onclick="setWbEraser('${block.id}')">🧹 消しゴム</button><button class="wb-action-btn" onclick="wbUndo('${block.id}')">↩️ 戻る</button><button class="wb-action-btn" onclick="wbRedo('${block.id}')">↪️ 進む</button><button class="wb-action-btn clear" onclick="clearWb('${block.id}')">🗑️ 白紙に戻す</button></div><div class="wb-colors">${colorBtns}</div></div><div class="wb-canvas-container"><canvas class="whiteboard" data-block-id="${block.id}" data-round-id="${roundId}"></canvas></div>`;
             }
 
             return `
@@ -467,6 +516,7 @@
 
         const stageList = document.getElementById('stage-list');
         const mainContent = document.getElementById('main-content');
+        const bottomBar = document.getElementById('bottom-action-bar');
 
         function renderSidebar() {
             stageList.innerHTML = '';
@@ -477,18 +527,17 @@
                 btn.onclick = () => { currentStage = stage; renderSidebar(); renderMainArea(); };
                 stageList.appendChild(btn);
             });
-            if(currentStage !== 'Summary') document.getElementById('summary-btn').classList.remove('active');
+            if(currentStage !== 'Summary') {
+                document.getElementById('summary-btn').classList.remove('active');
+                bottomBar.classList.remove('hidden'); // 入力画面ではボトムバーを表示
+            }
         }
 
         function renderMainArea() {
             let html = `
                 <div class="main-header">
                     <h1>${currentStage}</h1>
-                    <div class="header-actions">
-                        <button class="btn btn-blue" onclick="toggleDrawer()">🎒 アセットを開く</button>
-                        <button class="btn btn-yellow" onclick="addRound()">＋ 枠を追加 (ラウンド/メモ)</button>
-                    </div>
-                </div>`;
+                </div>`; // ヘッダー右上にあったボタン群は削除
             
             if (db[currentStage].length === 0) html += `<p style="color: #636e72;">データがありません。「＋ 枠を追加」ボタンを押して記録を始めましょう。</p>`;
 
@@ -513,6 +562,7 @@
             });
 
             mainContent.innerHTML = html;
+            adjustBottomBarPosition(); // レンダリング時に位置合わせ
             setTimeout(initWhiteboards, 0);
         }
 
@@ -521,6 +571,8 @@
             currentStage = 'Summary';
             document.querySelectorAll('.stage-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('summary-btn').classList.add('active');
+            
+            bottomBar.classList.add('hidden'); // 📝 レポート画面ではボトムバーを隠す
 
             let html = `<div class="main-header"><h1>📝 全体レポート</h1></div><button class="print-btn" onclick="window.print()">📄 PDFとして保存 / 印刷</button><div class="summary-view">`;
             let hasData = false;
