@@ -556,6 +556,102 @@
             letter-spacing: 0.3px;
         }
 
+        .block-label-input {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Noto Sans JP', sans-serif;
+            color: var(--ink-light);
+            letter-spacing: 0.3px;
+            min-width: 60px;
+            max-width: 200px;
+            cursor: text;
+            transition: all 0.12s;
+        }
+
+        .block-label-input:hover {
+            border-color: var(--border-strong);
+            background: var(--surface);
+        }
+
+        .block-label-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: var(--surface);
+            color: var(--gold-dim);
+            box-shadow: 0 0 0 2px rgba(200,155,60,0.10);
+        }
+
+        /* ── FORMAT CONTROLS ── */
+        .format-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding-left: 8px;
+            border-left: 1px solid var(--border);
+            margin-left: 2px;
+        }
+
+        .fmt-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--ink-xlight);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .fmt-size {
+            width: 44px;
+            padding: 2px 4px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--ink);
+            text-align: center;
+        }
+
+        .fmt-size:focus { outline: none; border-color: var(--gold); }
+
+        .fmt-select {
+            padding: 2px 4px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface);
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        .fmt-select:focus { outline: none; border-color: var(--gold); }
+
+        .fmt-color {
+            width: 26px;
+            height: 22px;
+            padding: 1px 2px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--surface);
+        }
+
+        .fmt-reset {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 1px 6px;
+            font-size: 12px;
+            color: var(--ink-xlight);
+            transition: all 0.1s;
+            line-height: 1.4;
+        }
+
+        .fmt-reset:hover { background: var(--surface-3); color: var(--ink); border-color: var(--border-strong); }
+
         .block-actions {
             margin-left: auto;
             display: flex;
@@ -916,7 +1012,7 @@
         let db = {};
 
         const genId = () => 'id_' + Date.now() + Math.random().toString(36).substr(2, 9);
-        function createBlock(type) { return { id: genId(), type: type, content: null }; }
+        function createBlock(type) { return { id: genId(), type: type, content: null, label: null, format: { fontSize: 13, fontWeight: 'normal', color: '' } }; }
         function createRound(name) { return { id: genId(), name: name, blocks: [createBlock('text')] }; }
 
         function createInitialDB() {
@@ -1103,6 +1199,44 @@
             if (round) { const block = round.blocks.find(b => b.id === blockId); if (block) { block.content = content; saveToLocal(); } }
         }
 
+        function updateBlockLabel(roundId, blockId, label) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (round) { const block = round.blocks.find(b => b.id === blockId); if (block) { block.label = label; saveToLocal(); } }
+        }
+
+        function updateBlockFormat(roundId, blockId, key, value) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (round) {
+                const block = round.blocks.find(b => b.id === blockId);
+                if (block) {
+                    if (!block.format) block.format = { fontSize: 13, fontWeight: 'normal', color: '' };
+                    block.format[key] = value;
+                    saveToLocal();
+                    const editor = document.querySelector(`.rich-editor[data-block-id="${blockId}"]`);
+                    if (editor) applyEditorStyle(editor, block.format);
+                }
+            }
+        }
+
+        function applyEditorStyle(editor, format) {
+            if (!format) return;
+            editor.style.fontSize = (format.fontSize || 13) + 'px';
+            editor.style.fontWeight = format.fontWeight || 'normal';
+            editor.style.color = format.color || '';
+        }
+
+        function resetBlockFormat(roundId, blockId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (round) {
+                const block = round.blocks.find(b => b.id === blockId);
+                if (block) {
+                    block.format = { fontSize: 13, fontWeight: 'normal', color: '' };
+                    saveToLocal();
+                    renderMainArea();
+                }
+            }
+        }
+
         function addRound() {
             db[currentStage].push(createRound(''));
             saveToLocal(); renderMainArea();
@@ -1219,9 +1353,12 @@
         function generateBlockHTML(block, roundId) {
             const pId = `'${roundId}', '${block.id}'`;
             let contentHTML = '';
+            const fmt = block.format || { fontSize: 13, fontWeight: 'normal', color: '' };
+            const editorStyle = `font-size:${fmt.fontSize}px;font-weight:${fmt.fontWeight};${fmt.color ? 'color:' + fmt.color + ';' : ''}`;
 
             if (block.type === 'text' || block.type === 'good' || block.type === 'bad') {
-                contentHTML = `<div class="rich-editor" contenteditable="true" placeholder="メモを入力... (例: けいとりん と打つとアイコンになります)"
+                contentHTML = `<div class="rich-editor" data-block-id="${block.id}" contenteditable="true" placeholder="メモを入力... (例: けいとりん と打つとアイコンになります)"
+                    style="${editorStyle}"
                     oninput="handleRichTextInput(event, this, ${pId})" onkeyup="handleRichTextInput(event, this, ${pId})"
                     ondrop="setTimeout(()=>updateBlockContent(${pId}, this.innerHTML), 100)">${block.content || ''}</div>`;
             } else if (block.type === 'image') {
@@ -1243,10 +1380,30 @@
                 <div class="wb-canvas-container"><canvas class="whiteboard" data-block-id="${block.id}" data-round-id="${roundId}"></canvas></div>`;
             }
 
+            const isTextBlock = (block.type === 'text' || block.type === 'good' || block.type === 'bad');
+            const formatControls = isTextBlock ? `
+                <div class="format-controls">
+                    <label class="fmt-label">サイズ</label>
+                    <input class="fmt-size" type="number" min="8" max="48" value="${fmt.fontSize || 13}" title="フォントサイズ(px)"
+                        onchange="updateBlockFormat(${pId}, 'fontSize', parseInt(this.value))">
+                    <label class="fmt-label">太さ</label>
+                    <select class="fmt-select" title="フォントウェイト" onchange="updateBlockFormat(${pId}, 'fontWeight', this.value)">
+                        <option value="normal" ${fmt.fontWeight === 'normal' ? 'selected' : ''}>標準</option>
+                        <option value="bold" ${fmt.fontWeight === 'bold' ? 'selected' : ''}>太字</option>
+                    </select>
+                    <label class="fmt-label">色</label>
+                    <input class="fmt-color" type="color" value="${fmt.color || '#1C2333'}" title="フォントカラー"
+                        onchange="updateBlockFormat(${pId}, 'color', this.value)">
+                    <button class="fmt-reset" onclick="resetBlockFormat(${pId})" title="書式リセット">↺</button>
+                </div>` : '';
+
+            const displayLabel = block.label !== null && block.label !== undefined ? block.label : getBlockLabel(block.type);
+
             return `
             <div class="block-item type-${block.type}">
                 <div class="block-toolbar">
-                    <span>${getBlockLabel(block.type)}</span>
+                    <input class="block-label-input" type="text" value="${displayLabel}" placeholder="${getBlockLabel(block.type)}" onchange="updateBlockLabel(${pId}, this.value)" title="クリックして名前を編集">
+                    ${formatControls}
                     <div class="block-actions">
                         <button class="action-btn" onclick="moveBlock(${pId}, 'up')" title="上へ">↑</button>
                         <button class="action-btn" onclick="moveBlock(${pId}, 'down')" title="下へ">↓</button>
@@ -1388,9 +1545,22 @@
                         stageHTML += `<div class="summary-container">`;
                         if (round.name.trim()) stageHTML += `<h3 style="margin:0 0 12px;color:var(--ink);font-size:15px;font-weight:700;">${round.name}</h3>`;
                         valid.forEach(b => {
-                            if (b.type === 'text') stageHTML += `<div class="sum-block sum-text">${b.content}</div>`;
-                            if (b.type === 'good') stageHTML += `<div class="sum-block sum-text good"><strong>✅ Good:</strong><br>${b.content}</div>`;
-                            if (b.type === 'bad') stageHTML += `<div class="sum-block sum-text bad"><strong>❌ Bad / Next:</strong><br>${b.content}</div>`;
+                            const fmt = b.format || {};
+                            const fmtStyle = `font-size:${fmt.fontSize||13}px;font-weight:${fmt.fontWeight||'normal'};${fmt.color?'color:'+fmt.color+';':''}`;
+                            const customLabel = (b.label !== null && b.label !== undefined && b.label !== '') ? b.label : null;
+
+                            if (b.type === 'text') {
+                                const labelHtml = customLabel ? `<div style="font-size:11px;font-weight:700;color:var(--ink-xlight);margin-bottom:4px;letter-spacing:0.5px;text-transform:uppercase;">${customLabel}</div>` : '';
+                                stageHTML += `<div class="sum-block">${labelHtml}<div class="sum-text" style="${fmtStyle}">${b.content}</div></div>`;
+                            }
+                            if (b.type === 'good') {
+                                const lbl = customLabel !== null ? customLabel : '✅ Good';
+                                stageHTML += `<div class="sum-block sum-text good" style="${fmtStyle}"><strong>${lbl}:</strong><br>${b.content}</div>`;
+                            }
+                            if (b.type === 'bad') {
+                                const lbl = customLabel !== null ? customLabel : '❌ Bad / Next';
+                                stageHTML += `<div class="sum-block sum-text bad" style="${fmtStyle}"><strong>${lbl}:</strong><br>${b.content}</div>`;
+                            }
                             if (b.type === 'image' || b.type === 'whiteboard') stageHTML += `<div class="sum-block"><img src="${b.content}" class="sum-img"></div>`;
                         });
                         stageHTML += `</div>`;
