@@ -795,10 +795,26 @@
         .tier-label-box > div { padding: 4px; border-radius: 4px; text-align: center; width: 100%; word-break: break-all; outline: none; }
         .tier-label-box > div:focus { background: rgba(255,255,255,0.5); }
         .tier-items { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-items: flex-start; min-height: 60px; }
-        .tier-item { width: 44px; height: 44px; border-radius: var(--radius-sm); overflow: hidden; cursor: grab; position: relative; border: 1px solid var(--border); background: var(--surface-3); }
-        .tier-item img { width: 100%; height: 100%; object-fit: cover; }
+        .tier-item {
+            width: 54px;
+            height: auto;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            cursor: grab;
+            position: relative;
+            border: 1px solid var(--border);
+            background: var(--surface-3);
+            display: flex;
+            flex-direction: column;
+        }
+        .tier-item img { width: 100%; height: 54px; object-fit: cover; }
         .tier-item .del-btn { position: absolute; top: -4px; right: -4px; background: var(--red); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: none; align-items: center; justify-content: center; cursor: pointer; border: none; z-index: 10; padding: 0; }
         .tier-item:hover .del-btn { display: flex; }
+        .tier-item-name {
+            font-size: 9px; color: var(--ink-mid); text-align: center;
+            line-height: 1.2; padding: 4px 2px; width: 100%;
+            word-break: break-all; font-weight: 500;
+        }
         .tier-add-row { background: var(--surface-2); border: none; padding: 8px; cursor: pointer; font-weight: 700; color: var(--ink-light); transition: 0.2s; font-size: 12px; }
         .tier-add-row:hover { background: var(--surface-3); color: var(--ink); }
         .tier-color-picker { position: absolute; bottom: 2px; right: 2px; width: 16px; height: 16px; padding: 0; border: none; border-radius: 4px; overflow: hidden; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
@@ -808,14 +824,14 @@
         .tier-row-btn:hover { background: var(--surface-3); color: var(--ink); }
 
         /* ── BOARD BLOCK ── */
-        .board-container { display: flex; justify-content: center; gap: 20px; padding: 20px; background: rgba(15,23,42,0.85); border-radius: var(--radius-sm); border: 1px solid var(--border); overflow-x: auto; }
+        .board-container { display: flex; justify-content: center; gap: 20px; padding: 20px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border); overflow-x: auto; }
         .board-grid { display: flex; flex-direction: column; gap: 4px; }
         .board-row { display: flex; gap: 4px; }
         .board-row.odd { margin-left: 36px; }
         .board-hex-cell { width: 68px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .board-hex-bg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-        .board-hex-bg polygon { fill: rgba(255,255,255,0.03); stroke: rgba(255,255,255,0.15); stroke-width: 1; transition: 0.2s; }
-        .board-hex-cell.drag-over .board-hex-bg polygon { fill: rgba(26,159,255,0.2); stroke: rgba(26,159,255,0.9); }
+        .board-hex-bg polygon { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1; transition: 0.2s; }
+        .board-hex-cell.drag-over .board-hex-bg polygon { fill: rgba(26,159,255,0.2) !important; stroke: rgba(26,159,255,0.9) !important; }
         .board-hex-champ { width: 90%; height: 90%; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); overflow: hidden; position: relative; z-index: 1; cursor: grab; background: #000; }
         .board-hex-champ-img { width: 100%; height: 100%; object-fit: cover; }
         .board-hex-champ-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 55%, rgba(0,0,0,0.8)); pointer-events: none; }
@@ -824,11 +840,11 @@
         .board-hex-item:hover { border-color: var(--red); transform: scale(1.1); }
         .board-hex-del-btn { position: absolute; top: -2px; right: -2px; background: var(--red); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 10; border: 1px solid white; }
         .board-hex-cell:hover .board-hex-del-btn { display: flex; }
-        .board-traits-panel { width: 160px; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.1); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .board-traits-title { font-size: 11px; color: var(--gold); font-weight: 700; text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
-        .board-trait-item { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
-        .board-trait-name { font-size: 11px; color: white; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .board-trait-count { font-size: 11px; color: var(--gold-light); font-weight: 700; background: rgba(0,0,0,0.5); padding: 0 5px; border-radius: 4px; }
+        .board-traits-panel { width: 160px; background: var(--surface); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .board-traits-title { font-size: 11px; color: var(--gold-dim); font-weight: 700; text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
+        .board-trait-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); }
+        .board-trait-name { font-size: 11px; color: var(--ink); font-weight: 600; text-shadow: none; }
+        .board-trait-count { font-size: 11px; color: var(--navy); font-weight: 700; background: var(--gold-pale); border: 1px solid var(--gold-light); padding: 0 5px; border-radius: 4px; }
 
         /* ── ASSET DRAWER ── */
         .asset-drawer {
@@ -1436,7 +1452,7 @@
                 const champs = assetData.champ.filter(c => c.cost === cost);
                 if (champs.length === 0) return '';
                 return `<div class="drawer-section-title">${cost}コスト</div><div class="drawer-grid">` +
-                    champs.map(c => `<img src="${c.url}" class="asset-icon" data-cost="${c.cost}" title="${c.name}" draggable="true" ondragstart="handleDragStart(event, '${c.url}')" alt="asset">`).join('') +
+                    champs.map(c => `<img src="${c.url}" class="asset-icon" data-cost="${c.cost}" title="${c.name}" draggable="true" ondragstart="handleDragStart(event, '${c.url}', '${c.name || ''}')" alt="asset">`).join('') +
                     `</div>`;
             }).join('');
             document.getElementById('drawer-champ').innerHTML = champHtml;
@@ -1446,7 +1462,7 @@
                 const items = assetData.item.filter(i => i.type === t.key);
                 if (items.length === 0) return '';
                 return `<div class="drawer-section-title">${t.label}</div><div class="drawer-grid">` +
-                    items.map(i => `<img src="${i.url}" class="asset-icon" title="${i.name}" draggable="true" ondragstart="handleDragStart(event, '${i.url}')" alt="asset">`).join('') +
+                    items.map(i => `<img src="${i.url}" class="asset-icon" title="${i.name}" draggable="true" ondragstart="handleDragStart(event, '${i.url}', '${i.name || ''}')" alt="asset">`).join('') +
                     `</div>`;
             }).join('');
             document.getElementById('drawer-item').innerHTML = itemHtml;
@@ -1456,16 +1472,18 @@
                 const augs = assetData.aug.filter(a => a.tier === t.key);
                 if (augs.length === 0) return '';
                 return `<div class="drawer-section-title">${t.label}</div><div class="drawer-grid">` +
-                    augs.map(a => `<img src="${a.url}" class="asset-icon" data-tier="${a.tier}" title="${a.name}" draggable="true" ondragstart="handleDragStart(event, '${a.url}')" alt="asset">`).join('') +
+                    augs.map(a => `<img src="${a.url}" class="asset-icon" data-tier="${a.tier}" title="${a.name}" draggable="true" ondragstart="handleDragStart(event, '${a.url}', '${a.name || ''}')" alt="asset">`).join('') +
                     `</div>`;
             }).join('');
             document.getElementById('drawer-aug').innerHTML = augHtml;
         }
 
-        function handleDragStart(e, url) {
+        function handleDragStart(e, url, name) {
             e.dataTransfer.setData('text/html', `<img src="${url}" class="inline-icon" alt="icon">`);
             e.dataTransfer.setData('text/plain', url);
-            e.dataTransfer.setData('application/json', JSON.stringify({ source: 'asset', url: url }));
+            const data = { source: 'asset', url: url };
+            if (name) data.name = name;
+            e.dataTransfer.setData('application/json', JSON.stringify(data));
         }
 
         function addBlock(roundId, blockType) {
@@ -1500,9 +1518,16 @@
         }
 
         /* ── Tier & Board Drag Drop Logic ── */
-        function handleTierItemDragStart(e, roundId, blockId, tierId, itemIdx, url) {
-            e.dataTransfer.setData('application/json', JSON.stringify({ source: 'tier', roundId, blockId, tierId, itemIdx, url }));
-            e.dataTransfer.setData('text/plain', url);
+        function handleTierItemDragStart(e, roundId, blockId, tierId, itemIdx) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let tierData = JSON.parse(block.content || '[]');
+            const tier = tierData.find(t => t.id === tierId);
+            if (!tier || !tier.items[itemIdx]) return;
+            let item = tier.items[itemIdx];
+            if (typeof item === 'string') item = { url: item, name: findNameByUrl(item) };
+            e.dataTransfer.setData('application/json', JSON.stringify({ source: 'tier', roundId, blockId, tierId, itemIdx, url: item.url, name: item.name }));
+            e.dataTransfer.setData('text/plain', item.url);
         }
 
         function handleTierDrop(e, roundId, blockId, targetTierId) {
@@ -1520,7 +1545,8 @@
                     if (srcTier) srcTier.items.splice(data.itemIdx, 1);
                 }
                 const targetTier = tierData.find(t => t.id === targetTierId);
-                if (targetTier) targetTier.items.push(data.url);
+                const name = data.name || findNameByUrl(data.url);
+                if (targetTier) targetTier.items.push({ url: data.url, name: name });
                 block.content = JSON.stringify(tierData);
                 saveToLocal(); renderMainArea();
             } catch (err) {}
@@ -1590,6 +1616,12 @@
         function handleBoardItemDragStart(e, roundId, blockId, cellIdx, url) {
             e.dataTransfer.setData('application/json', JSON.stringify({ source: 'board', roundId, blockId, cellIdx, url }));
             e.dataTransfer.setData('text/plain', url);
+        }
+
+        function findNameByUrl(url) {
+            const allAssets = [...assetData.champ, ...assetData.item, ...assetData.aug];
+            const asset = allAssets.find(a => a.url === url);
+            return asset ? asset.name : 'Unknown';
         }
 
         function getAssetType(url) {
@@ -1933,7 +1965,13 @@
                             <input type="color" class="tier-color-picker" value="${t.color}" onchange="updateTierColor(${pId}, '${t.id}', this.value)" title="色を変更">
                         </div>
                         <div class="tier-items">
-                            ${t.items.map((url, itemIdx) => `<div class="tier-item" draggable="true" ondragstart="handleTierItemDragStart(event, ${pId}, '${t.id}', ${itemIdx}, '${url}')"><img src="${url}"><button class="del-btn" onclick="removeTierItem(${pId}, '${t.id}', ${itemIdx})">×</button></div>`).join('')}
+                            ${t.items.map((item, itemIdx) => {
+                                if (typeof item === 'string') item = { url: item, name: findNameByUrl(item) };
+                                return `<div class="tier-item" draggable="true" ondragstart="handleTierItemDragStart(event, ${pId}, '${t.id}', ${itemIdx})">
+                                    <img src="${item.url}"><div class="tier-item-name">${item.name}</div>
+                                    <button class="del-btn" onclick="removeTierItem(${pId}, '${t.id}', ${itemIdx})">×</button>
+                                </div>`;
+                            }).join('')}
                         </div>
                         <div class="tier-row-controls">
                             <button class="tier-row-btn" onclick="moveTierRow(${pId}, '${t.id}', -1)" title="上へ">▲</button>
@@ -1975,7 +2013,7 @@
                 activeTraits.sort((a, b) => b.count - a.count);
 
                 let traitsHtml = `<div class="board-traits-panel"><div class="board-traits-title">ACTIVE TRAITS</div>`;
-                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: rgba(255,255,255,0.3); text-align: center;">なし</div>`;
+                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: var(--ink-xlight); text-align: center;">なし</div>`;
                 else activeTraits.forEach(at => { traitsHtml += `<div class="board-trait-item"><span class="board-trait-name">${at.name}</span><span class="board-trait-count">${at.count}</span></div>`; });
                 traitsHtml += `</div>`;
 
@@ -1984,7 +2022,18 @@
                     boardHtml += `<div class="board-row ${row % 2 === 1 ? 'odd' : ''}">`;
                     for(let col = 0; col < 7; col++) {
                         const idx = row * 7 + col; const cell = boardData[idx];
-                        boardHtml += `<div class="board-hex-cell" ondragover="event.preventDefault(); this.classList.add('drag-over');" ondragleave="this.classList.remove('drag-over');" ondrop="this.classList.remove('drag-over'); handleBoardDrop(event, ${pId}, ${idx})"><svg class="board-hex-bg" viewBox="0 0 78 78"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20"></polygon></svg>`;
+                        
+                        let hexStroke = 'var(--border-strong)';
+                        let hexStrokeWidth = '1';
+                        if (cell && cell.champ) {
+                            const champData = assetData.champ.find(c => c.url === cell.champ);
+                            if (champData) {
+                                const costColors = { 1: '#8a9aaa', 2: '#44cc66', 3: '#3399ff', 4: '#cc44ff', 5: '#ffcc44' };
+                                hexStroke = costColors[champData.cost] || hexStroke;
+                                hexStrokeWidth = '3';
+                            }
+                        }
+                        boardHtml += `<div class="board-hex-cell" ondragover="event.preventDefault(); this.classList.add('drag-over');" ondragleave="this.classList.remove('drag-over');" ondrop="this.classList.remove('drag-over'); handleBoardDrop(event, ${pId}, ${idx})"><svg class="board-hex-bg" viewBox="0 0 78 78"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20" style="stroke: ${hexStroke}; stroke-width: ${hexStrokeWidth};"></polygon></svg>`;
                         if (cell) {
                             boardHtml += `<div class="board-hex-champ" draggable="true" ondragstart="handleBoardItemDragStart(event, ${pId}, ${idx}, '${cell.champ}')"><img src="${cell.champ}" class="board-hex-champ-img"><div class="board-hex-champ-overlay"></div><div class="board-hex-items">${(cell.items || []).map((itUrl, iIdx) => `<img src="${itUrl}" class="board-hex-item" onclick="removeBoardItem(event, ${pId}, ${idx}, ${iIdx})" title="クリックでアイテム削除">`).join('')}</div></div><div class="board-hex-del-btn" onclick="removeBoardChamp(${pId}, ${idx})" title="駒を削除">×</div>`;
                         }
@@ -2183,7 +2232,11 @@
                                 const tierData = JSON.parse(b.content || '[]');
                                 let tHtml = `<div class="sum-block">${labelHtml}<div style="border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; display: flex; flex-direction: column; gap: 1px; background: var(--surface-2);">`;
                                 tierData.forEach(t => {
-                                    tHtml += `<div style="display: flex; background: var(--surface); min-height: 44px;"><div style="width: 60px; background: ${t.color}; display: flex; align-items: center; justify-content: center; font-weight: bold; border-right: 1px solid var(--border);">${t.label}</div><div style="flex: 1; padding: 6px; display: flex; flex-wrap: wrap; gap: 4px;">${t.items.map(url => `<img src="${url}" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">`).join('')}</div></div>`;
+                                    tHtml += `<div style="display: flex; background: var(--surface); min-height: 44px;"><div style="width: 60px; background: ${t.color}; display: flex; align-items: center; justify-content: center; font-weight: bold; border-right: 1px solid var(--border);">${t.label}</div><div style="flex: 1; padding: 6px; display: flex; flex-wrap: wrap; gap: 6px;">${t.items.map(item => {
+                                        const url = typeof item === 'string' ? item : item.url;
+                                        const name = typeof item === 'string' ? findNameByUrl(url) : item.name;
+                                        return `<div style="display:flex; flex-direction:column; align-items:center; width: 40px;"><img src="${url}" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;"><div style="font-size:8px; color: var(--ink-light); text-align:center; line-height:1.1; margin-top:2px; word-break:break-all;">${name}</div></div>`;
+                                    }).join('')}</div></div>`;
                                 });
                                 tHtml += `</div></div>`;
                                 stageHTML += tHtml;
@@ -2216,18 +2269,28 @@
                                 }
                                 activeTraits.sort((a, b) => b.count - a.count);
 
-                                let traitsHtml = `<div style="width: 140px; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 6px;">`;
-                                traitsHtml += `<div style="font-size: 11px; color: var(--gold-light); font-weight: bold; text-align: center; margin-bottom: 6px; letter-spacing: 1px;">ACTIVE TRAITS</div>`;
-                                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: rgba(255,255,255,0.4); text-align: center;">なし</div>`;
-                                else activeTraits.forEach(at => { traitsHtml += `<div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px;"><span style="font-size: 11px; color: white; font-weight: 600;">${at.name}</span><span style="font-size: 11px; color: var(--gold-light); font-weight: 700; background: rgba(0,0,0,0.5); padding: 0 5px; border-radius: 4px;">${at.count}</span></div>`; });
+                                let traitsHtml = `<div style="width: 140px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 6px;">`;
+                                traitsHtml += `<div style="font-size: 11px; color: var(--gold-dim); font-weight: bold; text-align: center; margin-bottom: 6px; letter-spacing: 1px;">ACTIVE TRAITS</div>`;
+                                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: var(--ink-xlight); text-align: center;">なし</div>`;
+                                else activeTraits.forEach(at => { traitsHtml += `<div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px;"><span style="font-size: 11px; color: var(--ink); font-weight: 600;">${at.name}</span><span style="font-size: 11px; color: var(--navy); font-weight: 700; background: var(--gold-pale); border: 1px solid var(--gold-light); padding: 0 5px; border-radius: 4px;">${at.count}</span></div>`; });
                                 traitsHtml += `</div>`;
 
-                                let bHtml = `<div class="sum-block">${labelHtml}<div style="background: #0f172a; padding: 16px; border-radius: var(--radius-sm); display: flex; gap: 20px; align-items: flex-start; justify-content: center;"><div style="display: flex; flex-direction: column; gap: 2px;">`;
+                                let bHtml = `<div class="sum-block">${labelHtml}<div style="background: var(--surface-2); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); display: flex; gap: 20px; align-items: flex-start; justify-content: center;"><div style="display: flex; flex-direction: column; gap: 2px;">`;
                                 for(let row = 0; row < 4; row++) {
                                     bHtml += `<div style="display: flex; gap: 2px; ${row % 2 === 1 ? 'margin-left: 20px;' : ''}">`;
                                     for(let col = 0; col < 7; col++) {
                                         const cell = boardData[row * 7 + col];
-                                        bHtml += `<div style="width: 40px; height: 40px; position: relative;"><svg viewBox="0 0 78 78" style="width:100%;height:100%;"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20" fill="rgba(255,255,255,0.1)"></polygon></svg>`;
+                                        let hexStroke = 'var(--border-strong)';
+                                        let hexStrokeWidth = '1';
+                                        if (cell && cell.champ) {
+                                            const champData = assetData.champ.find(c => c.url === cell.champ);
+                                            if (champData) {
+                                                const costColors = { 1: '#8a9aaa', 2: '#44cc66', 3: '#3399ff', 4: '#cc44ff', 5: '#ffcc44' };
+                                                hexStroke = costColors[champData.cost] || hexStroke;
+                                                hexStrokeWidth = '2';
+                                            }
+                                        }
+                                        bHtml += `<div style="width: 40px; height: 40px; position: relative;"><svg viewBox="0 0 78 78" style="width:100%;height:100%;"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20" fill="var(--surface)" stroke="${hexStroke}" stroke-width="${hexStrokeWidth}"></polygon></svg>`;
                                         if (cell) {
                                             bHtml += `<div style="position:absolute; inset:2px; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: #000; display:flex; align-items:center; justify-content:center;"><img src="${cell.champ}" style="width:100%;height:100%;object-fit:cover;"></div>`;
                                             if (cell.items && cell.items.length > 0) {
