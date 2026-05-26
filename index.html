@@ -327,7 +327,6 @@
         }
 
         /* ── HOME VIEW ── */
-        .home-view { }
 
         .home-header {
             display: flex;
@@ -788,6 +787,48 @@
         .wb-canvas-container { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; position: relative; }
         canvas.whiteboard { width: 100%; aspect-ratio: 16/9; height: auto; cursor: crosshair; display: block; }
 
+        /* ── TIER LIST BLOCK ── */
+        .tier-list { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
+        .tier-row { display: flex; background: var(--surface); min-height: 60px; }
+        .tier-label-box { width: 80px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; color: var(--ink); text-shadow: 0 1px 2px rgba(255,255,255,0.5); border-right: 1px solid var(--border); position: relative; }
+        .tier-label-box > div { padding: 4px; border-radius: 4px; text-align: center; width: 100%; word-break: break-all; outline: none; }
+        .tier-label-box > div:focus { background: rgba(255,255,255,0.5); }
+        .tier-items { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; align-items: flex-start; min-height: 60px; }
+        .tier-item { width: 44px; height: 44px; border-radius: var(--radius-sm); overflow: hidden; cursor: grab; position: relative; border: 1px solid var(--border); background: var(--surface-3); }
+        .tier-item img { width: 100%; height: 100%; object-fit: cover; }
+        .tier-item .del-btn { position: absolute; top: -4px; right: -4px; background: var(--red); color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; display: none; align-items: center; justify-content: center; cursor: pointer; border: none; z-index: 10; padding: 0; }
+        .tier-item:hover .del-btn { display: flex; }
+        .tier-add-row { background: var(--surface-2); border: none; padding: 8px; cursor: pointer; font-weight: 700; color: var(--ink-light); transition: 0.2s; font-size: 12px; }
+        .tier-add-row:hover { background: var(--surface-3); color: var(--ink); }
+        .tier-color-picker { position: absolute; bottom: 2px; right: 2px; width: 16px; height: 16px; padding: 0; border: none; border-radius: 4px; overflow: hidden; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+        .tier-label-box:hover .tier-color-picker { opacity: 1; }
+        .tier-row-controls { display: flex; flex-direction: column; width: 24px; background: var(--surface-2); border-left: 1px solid var(--border); }
+        .tier-row-btn { flex: 1; border: none; background: transparent; cursor: pointer; font-size: 10px; color: var(--ink-xlight); transition: 0.1s; }
+        .tier-row-btn:hover { background: var(--surface-3); color: var(--ink); }
+
+        /* ── BOARD BLOCK ── */
+        .board-container { display: flex; justify-content: center; gap: 20px; padding: 20px; background: rgba(15,23,42,0.85); border-radius: var(--radius-sm); border: 1px solid var(--border); overflow-x: auto; }
+        .board-grid { display: flex; flex-direction: column; gap: 4px; }
+        .board-row { display: flex; gap: 4px; }
+        .board-row.odd { margin-left: 36px; }
+        .board-hex-cell { width: 68px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .board-hex-bg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .board-hex-bg polygon { fill: rgba(255,255,255,0.03); stroke: rgba(255,255,255,0.15); stroke-width: 1; transition: 0.2s; }
+        .board-hex-cell.drag-over .board-hex-bg polygon { fill: rgba(26,159,255,0.2); stroke: rgba(26,159,255,0.9); }
+        .board-hex-champ { width: 90%; height: 90%; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); overflow: hidden; position: relative; z-index: 1; cursor: grab; background: #000; }
+        .board-hex-champ-img { width: 100%; height: 100%; object-fit: cover; }
+        .board-hex-champ-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 55%, rgba(0,0,0,0.8)); pointer-events: none; }
+        .board-hex-items { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; z-index: 2; pointer-events: auto; }
+        .board-hex-item { width: 18px; height: 18px; border: 1px solid rgba(255,255,255,0.8); border-radius: 2px; background: black; cursor: pointer; transition: 0.1s; }
+        .board-hex-item:hover { border-color: var(--red); transform: scale(1.1); }
+        .board-hex-del-btn { position: absolute; top: -2px; right: -2px; background: var(--red); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 10; border: 1px solid white; }
+        .board-hex-cell:hover .board-hex-del-btn { display: flex; }
+        .board-traits-panel { width: 160px; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.1); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .board-traits-title { font-size: 11px; color: var(--gold); font-weight: 700; text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
+        .board-trait-item { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .board-trait-name { font-size: 11px; color: white; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .board-trait-count { font-size: 11px; color: var(--gold-light); font-weight: 700; background: rgba(0,0,0,0.5); padding: 0 5px; border-radius: 4px; }
+
         /* ── ASSET DRAWER ── */
         .asset-drawer {
             position: fixed;
@@ -870,12 +911,27 @@
             overflow-y: auto;
             flex: 1;
             display: none;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            align-content: start;
         }
 
-        .drawer-content.active { display: grid; }
+        .drawer-content.active { display: block; }
+
+        .drawer-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink-xlight);
+            margin-top: 14px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+        }
+        
+        .drawer-section-title:first-child { margin-top: 0; }
+
+        .drawer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
 
         .asset-icon {
             width: 100%;
@@ -888,7 +944,15 @@
             background: var(--surface-3);
         }
 
-        .asset-icon:hover { border-color: var(--gold); transform: scale(1.06); box-shadow: var(--shadow-md); }
+        .asset-icon[data-cost="1"] { border-color: #8a9aaa; border-width: 2px; }
+        .asset-icon[data-cost="2"] { border-color: #44cc66; border-width: 2px; }
+        .asset-icon[data-cost="3"] { border-color: #3399ff; border-width: 2px; }
+        
+        .asset-icon[data-tier="silver"] { border-color: #A0A5A9; border-width: 2px; }
+        .asset-icon[data-tier="gold"] { border-color: #C89B3C; border-width: 2px; }
+        .asset-icon[data-tier="prismatic"] { border-color: #D488FD; border-width: 2px; }
+
+        .asset-icon:hover { transform: scale(1.06); box-shadow: var(--shadow-md); border-color: var(--gold); }
         .asset-icon:active { cursor: grabbing; transform: scale(0.95); }
 
         /* ── SUMMARY / REPORT ── */
@@ -947,7 +1011,13 @@
         .empty-state .emoji { font-size: 32px; margin-bottom: 12px; }
 
         @media print {
-            body { background: white; overflow: visible; height: auto; }
+            body { 
+                background: white; 
+                overflow: visible; 
+                height: auto; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
             .app-header, .sidebar, .print-btn, .asset-drawer { display: none !important; }
             .main-content { padding: 0; overflow: visible; background: white; }
             .summary-view { box-shadow: none; border: none; padding: 0; }
@@ -963,7 +1033,7 @@
         </div>
         <div class="header-links">
             <a href="https://metatft.com/" target="_blank" class="link-btn">
-                <img src="https://metatft.com/favicon.ico" alt="MetaTFT"> MetaTFT
+                <img src="https://www.metatft.com/logo.svg" alt="MetaTFT"> MetaTFT
             </a>
             <a href="https://tftips.app/" target="_blank" class="link-btn">
                 <img src="https://tftips.app/favicon.ico" alt="TFTips"> TFTips
@@ -1012,7 +1082,20 @@
         let db = {};
 
         const genId = () => 'id_' + Date.now() + Math.random().toString(36).substr(2, 9);
-        function createBlock(type) { return { id: genId(), type: type, content: null, label: null, format: { fontSize: 13, fontWeight: 'normal', color: '' } }; }
+        function createBlock(type) { 
+            let content = null;
+            if (type === 'tier') {
+                content = JSON.stringify([
+                    {id: genId(), label: 'S', color: '#ff7f7f', items: []},
+                    {id: genId(), label: 'A', color: '#ffbf7f', items: []},
+                    {id: genId(), label: 'B', color: '#ffff7f', items: []},
+                    {id: genId(), label: 'C', color: '#7fff7f', items: []}
+                ]);
+            } else if (type === 'board') {
+                content = JSON.stringify(Array(28).fill(null));
+            }
+            return { id: genId(), type: type, content: content, label: null, format: { fontSize: 13, fontWeight: 'normal', color: '' } }; 
+        }
         function createRound(name) { return { id: genId(), name: name, blocks: [createBlock('text')] }; }
 
         function createInitialDB() {
@@ -1084,38 +1167,224 @@
             if (appData.currentId) { appData.sessions[appData.currentId].title = title; saveToLocal(); }
         }
 
-        const assetData = {
-            champ: [
-                'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/51.png',
-                'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/25.png',
-                'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/17.png',
-                'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/360.png',
-                'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/103.png'
-            ],
-            item: [
-                'https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/standard/bf_sword.png',
-                'https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/standard/tear_of_the_goddess.png',
-                'https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/standard/infinity_edge.png',
-                'https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/standard/spear_of_shojin.png'
-            ],
-            aug: [
-                'https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/augments/hexcore/tier1.png',
-                'https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/augments/hexcore/tier2.png',
-                'https://raw.communitydragon.org/latest/game/assets/maps/particles/tft/item_icons/augments/hexcore/tier3.png'
-            ]
+        const TRAIT_JA = {
+            'N.O.V.A.': 'N.O.V.A.', 'Bastion': 'バスティオン', 'Anima': 'アニマ', 'Primordian': 'プライモーディアン', 
+            'Rogue': 'ローグ', 'Fateweaver': 'フェイトウィーバー', 'Dark Star': 'ダークスター', 'Brawler': 'ブローラー',
+            'Timebreaker': 'タイムブレーカー', 'Sniper': 'スナイパー', 'Arbiter': 'アービター', 'Vanguard': 'ヴァンガード', 
+            'Shepherd': '導き手', 'Replicator': 'レプリケーター', 'Space Groove': 'スペースグルーヴ', 'Meeple': 'ミィプル', 
+            'Stargazer': '星の観測者', 'Marauder': '略奪者', 'Challenger': 'チャレンジャー', 'Psionic': 'サイオニック',
+            'Channeler': 'コンジット', 'Voyager': 'ヴォイジャー', 'Mecha': 'メカ', 'Redeemer': '救済者', 'missfortuneuniquetrait': '銃装機神'
         };
 
-        const iconDict = {
-            'ケイトリン': assetData.champ[0], 'けいとりん': assetData.champ[0],
-            'モルガナ': assetData.champ[1], 'もるがな': assetData.champ[1],
-            'ティーモ': assetData.champ[2], 'てぃーも': assetData.champ[2],
-            'サミーラ': assetData.champ[3], 'さみーら': assetData.champ[3],
-            'アーリ': assetData.champ[4], 'あーり': assetData.champ[4],
-            'bf': assetData.item[0], 'BF': assetData.item[0], '剣': assetData.item[0],
-            '涙': assetData.item[1], 'なみだ': assetData.item[1],
-            'ie': assetData.item[2], 'IE': assetData.item[2],
-            'ショウジン': assetData.item[3], 'しょうじん': assetData.item[3]
+        const TRAIT_TIERS = {
+            'Anima':[3,6],'Arbiter':[2,3],'Dark Star':[2,4,6,9],'Mecha':[3,4,6],'Meeple':[3,5,7,10],
+            'N.O.V.A.':[2,5],'Primordian':[2,3],'Psionic':[2,4],'Space Groove':[1,3,5,7,10],
+            'Stargazer':[3,4,5,6,7],'Timebreaker':[2,3,4],'Bastion':[2,4,6],'Brawler':[2,4,6],
+            'Challenger':[2,3,4,5],'Channeler':[2,3,4,5],'Fateweaver':[2,4],'Marauder':[2,4,6],
+            'Replicator':[2,4],'Rogue':[2,3,4,5],'Shepherd':[3,5,7],'Sniper':[2,3,4,5],
+            'Vanguard':[2,4,6],'Voyager':[2,3,4,5,6],'Redeemer':[1],'missfortuneuniquetrait':[1]
         };
+
+        const CHAMPS_DATA = [
+            {jaName:'エイトロックス', kana:'えいとろっくす', img:'Aatrox', cost: 1, traits:['N.O.V.A.', 'Bastion']}, {jaName:'ブライアー', kana:'ぶらいあー', img:'Briar', cost: 1, traits:['Anima', 'Primordian', 'Rogue']}, {jaName:'ケイトリン', kana:'けいとりん', img:'Caitlyn', cost: 1, traits:['N.O.V.A.', 'Fateweaver']},
+            {jaName:'チョ=ガス', kana:'ちょがす', img:'Chogath', cost: 1, traits:['Dark Star', 'Brawler']}, {jaName:'エズリアル', kana:'えずりある', img:'Ezreal', cost: 1, traits:['Timebreaker', 'Sniper']}, {jaName:'レオナ', kana:'れおな', img:'Leona', cost: 1, traits:['Arbiter', 'Vanguard']},
+            {jaName:'リサンドラ', kana:'りさんどら', img:'Lissandra', cost: 1, traits:['Dark Star', 'Shepherd', 'Replicator']}, {jaName:'ナサス', kana:'なさす', img:'Nasus', cost: 1, traits:['Space Groove', 'Vanguard']}, {jaName:'ポッピー', kana:'ぽっぴー', img:'Poppy', cost: 1, traits:['Meeple', 'Bastion']},
+            {jaName:'レク=サイ', kana:'れくさい', img:'RekSai', cost: 1, traits:['Primordian', 'Brawler']}, {jaName:'タロン', kana:'たろん', img:'Talon', cost: 1, traits:['Stargazer', 'Rogue']}, {jaName:'ティーモ', kana:'てぃーも', img:'Teemo', cost: 1, traits:['Space Groove', 'Shepherd']},
+            {jaName:'ツイステッド・フェイト', kana:'ついすてっど', img:'TwistedFate', cost: 1, traits:['Stargazer', 'Fateweaver']}, {jaName:'ベイガー', kana:'べいがー', img:'Veigar', cost: 1, traits:['Meeple', 'Replicator']},
+            {jaName:'アカリ', kana:'あかり', img:'Akali', cost: 2, traits:['N.O.V.A.', 'Marauder']}, {jaName:'ベル=ヴェス', kana:'べるべす', img:'Belveth', cost: 2, traits:['Primordian', 'Challenger', 'Marauder']}, {jaName:'ナー', kana:'なー', img:'Gnar', cost: 2, traits:['Meeple', 'Sniper']},
+            {jaName:'グラガス', kana:'ぐらがす', img:'Gragas', cost: 2, traits:['Psionic', 'Brawler']}, {jaName:'グウェン', kana:'ぐぇん', img:'Gwen', cost: 2, traits:['Space Groove', 'Rogue']}, {jaName:'ジャックス', kana:'じゃっくす', img:'Jax', cost: 2, traits:['Stargazer', 'Bastion']},
+            {jaName:'ジンクス', kana:'じんくす', img:'Jinx', cost: 2, traits:['Anima', 'Challenger']}, {jaName:'ミープシー', kana:'みーぷしー', img:'IvernMinion', cost: 2, traits:['Meeple', 'Shepherd', 'Voyager']}, {jaName:'ミリオ', kana:'みりお', img:'Milio', cost: 2, traits:['Timebreaker', 'Fateweaver']},
+            {jaName:'モルデカイザー', kana:'もるでかいざー', img:'Mordekaiser', cost: 2, traits:['Dark Star', 'Channeler', 'Vanguard']}, {jaName:'パンテオン', kana:'ぱんておん', img:'Pantheon', cost: 2, traits:['Timebreaker', 'Brawler', 'Replicator']}, {jaName:'パイク', kana:'ぱいく', img:'Pyke', cost: 2, traits:['Psionic', 'Voyager']},
+            {jaName:'ゾーイ', kana:'ぞーい', img:'Zoe', cost: 2, traits:['Arbiter', 'Channeler']}, {jaName:'オーロラ', kana:'おーろら', img:'Aurora', cost: 3, traits:['Anima', 'Voyager']}, {jaName:'ダイアナ', kana:'だいあな', img:'Diana', cost: 3, traits:['Arbiter', 'Challenger']},
+            {jaName:'フィズ', kana:'ふぃず', img:'Fizz', cost: 3, traits:['Meeple', 'Rogue']}, {jaName:'イラオイ', kana:'いらおい', img:'Illaoi', cost: 3, traits:['Anima', 'Vanguard', 'Shepherd']}, {jaName:'カイ=サ', kana:'かいさ', img:'Kaisa', cost: 3, traits:['Dark Star', 'Rogue']},
+            {jaName:'ルル', kana:'るる', img:'Lulu', cost: 3, traits:['Stargazer', 'Replicator']}, {jaName:'マオカイ', kana:'まおかい', img:'Maokai', cost: 3, traits:['N.O.V.A.', 'Brawler']}, {jaName:'ミス・フォーチュン', kana:'みすふぉーちゅん', img:'MissFortune', cost: 3, traits:['missfortuneuniquetrait']},
+            {jaName:'オーン', kana:'おーん', img:'Ornn', cost: 3, traits:['Space Groove', 'Bastion']}, {jaName:'ラスート', kana:'らすーと', img:'Rhaast', cost: 3, traits:['Redeemer']}, {jaName:'サミーラ', kana:'さみーら', img:'Samira', cost: 3, traits:['Space Groove', 'Sniper']},
+            {jaName:'アーゴット', kana:'あーごっと', img:'Urgot', cost: 3, traits:['Mecha', 'Brawler', 'Marauder']}, {jaName:'ビクター', kana:'びくたー', img:'Viktor', cost: 3, traits:['Psionic', 'Channeler']}
+        ];
+
+        const ITEMS_DATA = [
+            {name:'B.F. Sword', jaName:'BFソード', short:['bf', 'BF', '剣'], type: 'comp'},
+            {name:'Recurve Bow', jaName:'リカーブボウ', short:['弓', 'ボウ', 'bow'], type: 'comp'},
+            {name:'Needlessly Large Rod', jaName:'ロッド', short:['ロッド', 'rod', '杖'], type: 'comp'},
+            {name:'Tear of the Goddess', jaName:'女神の涙', short:['涙', 'なみだ', 'tear'], type: 'comp'},
+            {name:'Chain Vest', jaName:'チェインベスト', short:['ベスト', 'アーマー', 'chain'], type: 'comp'},
+            {name:'Negatron Cloak', jaName:'ネガトロン', short:['マント', 'クローク', 'cloak'], type: 'comp'},
+            {name:"Giant's Belt", jaName:'ジャイアントベルト', short:['ベルト', 'belt', '帯'], type: 'comp'},
+            {name:'Sparring Gloves', jaName:'グローブ', short:['手袋', 'glove'], type: 'comp'},
+            {name:'Spatula', jaName:'へら', short:['spatula'], type: 'comp'},
+            {name:'Frying Pan', jaName:'フライパン', short:['パン', 'pan'], type: 'comp'},
+            {name:'Infinity Edge', jaName:'インフィニティエッジ', short:['ie', 'IE'], type: 'completed'},
+            {name:'spearofshojin', jaName:'ショウジン', short:['しょうじん', 'shojin'], type: 'completed'},
+            {name:'deathblade', jaName:'デスブレード', short:['デスブレ', 'db', 'DB'], type: 'completed'},
+            {name:'Giant Slayer', jaName:'ジャイアントスレイヤー', short:['gs', 'GS', 'ジャイスレ'], type: 'completed'},
+            {name:'Hextech Gunblade', jaName:'ガンブレード', short:['ガンブレ', 'gunblade'], type: 'completed'},
+            {name:'guardianangel', jaName:'ナイトエッジ', short:['edge'], type: 'completed'},
+            {name:'Bloodthirster', jaName:'ブラッドサースター', short:['bt', 'BT', 'ブラサス'], type: 'completed'},
+            {name:'steraksgage', jaName:'ステラック', short:['篭手'], type: 'completed'},
+            {name:'rapidfirecannon', jaName:'レッドバフ', short:['赤バフ', 'red'], type: 'completed'},
+            {name:"Guinsoo's Rageblade", jaName:'グインソー', short:['guinsoo'], type: 'completed'},
+            {name:'statikkshiv', jaName:'ヴォイドスタッフ', short:['ボイスタ', 'void'], type: 'completed'},
+            {name:"Titan's Resolve", jaName:'巨人の誓い', short:['タイタン', '巨人'], type: 'completed'},
+            {name:'runaanshurricane', jaName:'クラーケンの怒り', short:['クラーケン'], type: 'completed'},
+            {name:'leviathan', jaName:'ナッシャートゥース', short:['ナッシャー'], type: 'completed'},
+            {name:'Last Whisper', jaName:'ラストウィスパー', short:['lw', 'LW', 'ラスウィス'], type: 'completed'},
+            {name:"Rabadon's Deathcap", jaName:'ラバドン', short:['デスキャップ', '帽子'], type: 'completed'},
+            {name:"Archangel's Staff", jaName:'アークエンジェル', short:['アクエン', 'aa', 'AA'], type: 'completed'},
+            {name:'Crownguard', jaName:'クラウンガード', short:['クラガ'], type: 'completed'},
+            {name:'Ionic Spark', jaName:'アイオニック', short:['spark'], type: 'completed'},
+            {name:'Morellonomicon', jaName:'モレロノミコン', short:['モレロ'], type: 'completed'},
+            {name:'Jeweled Gauntlet', jaName:'ジュエルガントレット', short:['jg', 'JG', 'ジュエル'], type: 'completed'},
+            {name:'Blue Buff', jaName:'ブルーバフ', short:['青バフ', 'blue'], type: 'completed'},
+            {name:'frozenheart', jaName:'プロテクター', short:['誓い'], type: 'completed'},
+            {name:'Adaptive Helm', jaName:'アダプティブヘルム', short:['アダプティブ'], type: 'completed'},
+            {name:'Redemption', jaName:'ビサージュ', short:['スピリット'], type: 'completed'},
+            {name:'unstableconcoction', jaName:'ハンドオブジャスティス', short:['hoj', 'HOJ'], type: 'completed'},
+            {name:'Bramble Vest', jaName:'ブランブルベスト', short:['ブランブル'], type: 'completed'},
+            {name:'Gargoyle Stoneplate', jaName:'ガーゴイル', short:['石像'], type: 'completed'},
+            {name:'redbuff', jaName:'サンファイア', short:['サンファ'], type: 'completed'},
+            {name:'nightharvester', jaName:'揺るがぬ心', short:[], type: 'completed'},
+            {name:"Dragon's Claw", jaName:'ドラゴンクロウ', short:['ドラクロ'], type: 'completed'},
+            {name:'spectralgauntlet', jaName:'イーブンシュラウド', short:['イーブン'], type: 'completed'},
+            {name:'Quicksilver', jaName:'クイックシルバー', short:['qss', 'QSS'], type: 'completed'},
+            {name:"Warmog's Armor", jaName:'ワーモグアーマー', short:['ワーモグ'], type: 'completed'},
+            {name:'powergauntlet', jaName:'ストライカーフレイル', short:['ストライカー'], type: 'completed'},
+            {name:"Thief's Gloves", jaName:'盗賊のグローブ', short:['盗賊'], type: 'completed'},
+            // 紋章・その他
+            {name:'Dark Star Emblem', jaName:'ダークスターの紋章', short:['ダークスター', 'darkstar'], type: 'emblem', grantedTrait: 'Dark Star'},
+            {name:'pulsefire Emblem', jaName:'タイムブレーカーの紋章', short:['タイムブレーカー', 'timebreaker'], type: 'emblem', grantedTrait: 'Timebreaker'},
+            {name:'Stargazer Emblem', jaName:'星の観測者の紋章', short:['星の観測者', 'stargazer'], type: 'emblem', grantedTrait: 'Stargazer'},
+            {name:'Space Groove Emblem', jaName:'スペースグルーヴの紋章', short:['スペースグルーヴ', 'spacegroove'], type: 'emblem', grantedTrait: 'Space Groove'},
+            {name:'astronaut Emblem', jaName:'ミィプルの紋章', short:['ミィプル', 'meeple'], type: 'emblem', grantedTrait: 'Meeple'},
+            {name:'favored Emblem', jaName:'アービターの紋章', short:['アービター', 'arbiter'], type: 'emblem', grantedTrait: 'Arbiter'},
+            {name:'Primordian Emblem', jaName:'プリモーディアンの紋章', short:['プリモーディアン', 'primordian'], type: 'emblem', grantedTrait: 'Primordian'},
+            {name:'drx Emblem', jaName:'NOVAの紋章', short:['nova', 'NOVA'], type: 'emblem', grantedTrait: 'N.O.V.A.'},
+            {name:'meleetrait Emblem', jaName:'略奪者の紋章', short:['略奪者', 'marauder'], type: 'emblem', grantedTrait: 'Marauder'},
+            {name:'astrait Emblem', jaName:'チャレンジャーの紋章', short:['チャレンジャー', 'challenger'], type: 'emblem', grantedTrait: 'Challenger'},
+            {name:'flextrait Emblem', jaName:'ボイジャーの紋章', short:['ボイジャー', 'voyager'], type: 'emblem', grantedTrait: 'Voyager'},
+            {name:'summontrait Emblem', jaName:'導き手の紋章', short:['導き手', 'shepherd'], type: 'emblem', grantedTrait: 'Shepherd'},
+            {name:'resisttank Emblem', jaName:'バスティオンの紋章', short:['バスティオン', 'bastion'], type: 'emblem', grantedTrait: 'Bastion'},
+            {name:'shieldtank Emblem', jaName:'ヴァンガードの紋章', short:['ヴァンガード', 'vanguard'], type: 'emblem', grantedTrait: 'Vanguard'},
+            {name:'hptank Emblem', jaName:'ブローラーの紋章', short:['ブローラー', 'brawler'], type: 'emblem', grantedTrait: 'Brawler'},
+            {name:'assassintrait Emblem', jaName:'ローグの紋章', short:['ローグ', 'rogue'], type: 'emblem', grantedTrait: 'Rogue'},
+            {name:'animasquad Emblem', jaName:'アニマの紋章', short:['アニマ', 'anima'], type: 'emblem', grantedTrait: 'Anima'},
+            {name:'Psyops Emblem', jaName:'サイオニックの紋章', short:['サイオニック', 'psionic'], type: 'emblem', grantedTrait: 'Psionic'},
+            {name:'rangedtrait Emblem', jaName:'スナイパーの紋章', short:['スナイパー', 'sniper'], type: 'emblem', grantedTrait: 'Sniper'},
+            {name:'forceofnature', jaName:'タクティシャンの王冠', short:['王冠', 'crown', 'fon'], type: 'emblem'},
+            {name:'itemreroller', jaName:'再合成装置', short:['再合成'], type: 'emblem', isConsumable: true},
+            {name:'itemremover', jaName:'磁力式除去装置', short:['除去装置', '解除'], type: 'emblem', isConsumable: true},
+            {name:'championduplicator_iii', jaName:'小型チャンピオン複製機', short:['小型複製機'], type: 'emblem', isConsumable: true},
+            {name:'neekoshelp', jaName:'チャンピオン複製機', short:['複製機', 'ニーコ'], type: 'emblem', isConsumable: true}
+        ];
+
+        const assetData = { champ: [], item: [], aug: [] };
+        const iconDict = {};
+
+        CHAMPS_DATA.forEach(c => {
+            const url = `https://blitz-cdn.blitz.gg/blitz/tft/champion_squares/set17/TFT17_${c.img.charAt(0).toUpperCase() + c.img.slice(1)}.webp`;
+            assetData.champ.push({ url, cost: c.cost, name: c.jaName, traits: c.traits });
+            iconDict[c.jaName] = url;
+            if (c.kana) iconDict[c.kana] = url;
+        });
+
+        ITEMS_DATA.forEach(i => {
+            let url;
+            if (i.name.includes('Emblem')) {
+                const traitName = i.name.replace(' Emblem', '').toLowerCase().replace(/\s+/g, '').replace(/\./g, '');
+                url = `https://cdn.metatft.com/file/metatft/items/tft17_item_${traitName}emblemitem.png`;
+            } else if (i.isConsumable) {
+                url = `https://cdn.metatft.com/file/metatft/items/tft_consumable_${i.name}.png`;
+            } else {
+                const formattedName = i.name.toLowerCase().replace(/['.]/g, '').replace(/\s+/g, '');
+                url = `https://cdn.metatft.com/file/metatft/items/tft_item_${formattedName}.png?v=1`;
+            }
+            assetData.item.push({ url, type: i.type, name: i.jaName, grantedTrait: i.grantedTrait });
+            iconDict[i.jaName] = url;
+            i.short.forEach(s => iconDict[s] = url);
+        });
+
+        const AUGMENTS_DATA = [
+            // シルバー
+            { imgName: 'afk-i', tier: 'silver', name: 'AFK' },
+            { imgName: 'silver-spoon-i', tier: 'silver', name: '銀の匙' },
+            { imgName: 'cognitivetax_i', tier: 'silver', name: 'コグニティブ タックス' },
+            { imgName: 'powerup_i', tier: 'silver', name: 'オーグメントパワー' },
+            { imgName: 'threes-company-i', tier: 'silver', name: 'ワンツースリー' },
+            { imgName: 'bandthieves1', tier: 'silver', name: '盗賊団' },
+            { imgName: 'itemgrabbag1', tier: 'silver', name: 'アイテム福袋' },
+            { imgName: 'hyperbolicrodextender_i', tier: 'silver', name: '連続魔法' },
+            { imgName: 'carveapath_i', tier: 'silver', name: '道を切り拓け' },
+            { imgName: 'extrabuckles_i', tier: 'silver', name: '追加のバックル' },
+            { imgName: 'makeshift1', tier: 'silver', name: '即席アーマー I' },
+            { imgName: 'expedition_i', tier: 'silver', name: 'エクスペディション' },
+            { imgName: 'thetower_i', tier: 'silver', name: 'ザ・タワー' },
+            { imgName: 'tiny-titans-i', tier: 'silver', name: '小さな巨人' },
+            { imgName: 'building-an-army-i', tier: 'silver', name: 'チーム構築' },
+            { imgName: 'branching-out-i', tier: 'silver', name: '構成拡大' },
+            { imgName: 'kickstart_i', tier: 'silver', name: 'キックスタート' },
+            { imgName: 'firesale_i', tier: 'silver', name: 'ファイアセール' },
+            { imgName: 'slice_of_life_i', tier: 'silver', name: '普通の日々' },
+            { imgName: 'good-for-something-i', tier: 'silver', name: '有効活用 I' },
+            { imgName: 'recurvewrecker_i', tier: 'silver', name: '援護の弓' },
+            { imgName: 'craftedcrafting_i', tier: 'silver', name: '巧みなクラフト' },
+            // ゴールド
+            { imgName: 'legionofthrees_ii', tier: 'gold', name: '3の軍団' },
+            { imgName: 'epoch_ii', tier: 'gold', name: 'エポック' },
+            { imgName: 'trade2', tier: 'gold', name: 'トレードセクター' },
+            { imgName: 'savingsaccount_ii', tier: 'gold', name: '普通預金口座' },
+            { imgName: 'slammin_ii', tier: 'gold', name: '叩きつけ' },
+            { imgName: 'calculatedloss2', tier: 'gold', name: '戦略的敗北' },
+            { imgName: 'pandora2', tier: 'gold', name: 'パンドラのアイテム II' },
+            { imgName: 'prizefighter_ii', tier: 'gold', name: 'プロボクサー' },
+            { imgName: 'feedtheflames_ii', tier: 'gold', name: '炎を強めて' },
+            { imgName: 'seraphimsstaff_ii', tier: 'gold', name: 'セラフィムの杖' },
+            { imgName: 'spiritofredemption_ii', tier: 'gold', name: 'リデンプションの魂' },
+            { imgName: 'warpath_ii', tier: 'gold', name: '出陣' },
+            { imgName: 'makeshift2', tier: 'gold', name: '即席アーマー II' },
+            { imgName: 'bodyguardstraining_ii', tier: 'gold', name: 'ボディーガードの訓練' },
+            { imgName: 'unforgotten_ii', tier: 'gold', name: 'ウォーロードの名誉' },
+            { imgName: 'infinityprotection_ii', tier: 'gold', name: 'インフィニティの守護' },
+            { imgName: 'animacommander_ii', tier: 'gold', name: 'アニマ司令官' },
+            { imgName: 'ultrarapidfire_ii', tier: 'gold', name: 'U.R.F.' },
+            { imgName: 'backlineblueprint_ii', tier: 'gold', name: '後衛の設計図' },
+            { imgName: 'frontlinefoundation_ii', tier: 'gold', name: '前衛の礎' },
+            { imgName: 'spreadingroots_ii', tier: 'gold', name: '広がる根' },
+            { imgName: 'earlylearning_ii', tier: 'gold', name: '早期教育' },
+            { imgName: 'noscoutnopivot_ii', tier: 'gold', name: '偵察なし、変更なし' },
+            { imgName: 'twomuchvalue_ii', tier: 'gold', name: 'お得な2' },
+            { imgName: 'advancedloan_ii', tier: 'gold', name: '前借り' },
+            { imgName: 'dizzy-ii', tier: 'gold', name: '乱れる思考' },
+            { imgName: 'salvage2', tier: 'gold', name: '回収箱' },
+            { imgName: 'two-tanky-ii', tier: 'gold', name: '2体のタンク' },
+            { imgName: 'birthdayreunion_ii', tier: 'gold', name: 'バースデー リユニオン' },
+            { imgName: 'earning-from-experience-ii', tier: 'gold', name: '研究熱心' },
+            { imgName: 'sunfireboard2', tier: 'gold', name: 'サンファイア ボード' },
+            { imgName: 'hyperroll2', tier: 'gold', name: 'ハスラー' },
+            // プリズマティック
+            { imgName: 'upwardmobility_iii', tier: 'prismatic', name: '上方移動' },
+            { imgName: 'richgetricher3', tier: 'prismatic', name: 'ヘッジファンド' },
+            { imgName: 'goldenticket3', tier: 'prismatic', name: 'プリズムチケット' },
+            { imgName: 'atwhatcost_iii', tier: 'prismatic', name: '代償' },
+            { imgName: 'constructacompanion_iii', tier: 'prismatic', name: '仲間を作ろう' },
+            { imgName: 'levelup3', tier: 'prismatic', name: 'レベルアップ！' },
+            { imgName: 'bandthieves3', tier: 'prismatic', name: '盗賊団 II' },
+            { imgName: 'https://tftips.b-cdn.net/aug/_deadliercaps.avif?v=1', tier: 'prismatic', name: 'もっと怖いキャップ' },
+            { imgName: 'exaltedadventure_iii', tier: 'prismatic', name: '崇高の冒険' },
+            { imgName: 'https://tftips.b-cdn.net/aug/_tragicalblade.avif?v=1', tier: 'prismatic', name: 'デッドリアー ブレード' },
+            { imgName: 'cursedcrown-iii', tier: 'prismatic', name: 'カースドのクラウン' },
+            { imgName: 'comebackstory_iii', tier: 'prismatic', name: '逆転劇' },
+            { imgName: 'worththewait_iii', tier: 'prismatic', name: '待つ価値あり II' },
+            { imgName: 'golden-gifts-iii', tier: 'prismatic', name: 'バースデープレゼント' },
+            { imgName: 'tacticianskitchen_iii', tier: 'prismatic', name: 'タクティシャンの台所' },
+            { imgName: 'thetraittree_iii', tier: 'prismatic', name: '特性の木' },
+            { imgName: 'buried-treasures-iii', tier: 'prismatic', name: '埋もれた宝物' }
+        ];
+
+        AUGMENTS_DATA.forEach(a => {
+            const url = a.imgName.startsWith('http') 
+                ? a.imgName 
+                : `https://cdn.metatft.com/file/metatft/augments/${a.imgName}.png`;
+            assetData.aug.push({ url, tier: a.tier, name: a.name });
+        });
 
         let isComposing = false;
         document.addEventListener('compositionstart', () => isComposing = true);
@@ -1162,15 +1431,40 @@
         }
 
         function renderDrawerAssets() {
-            Object.keys(assetData).forEach(type => {
-                const container = document.getElementById(`drawer-${type}`);
-                container.innerHTML = assetData[type].map(url => `<img src="${url}" class="asset-icon" draggable="true" ondragstart="handleDragStart(event, '${url}')" alt="asset">`).join('');
-            });
+            const champHtml = [1, 2, 3].map(cost => {
+                const champs = assetData.champ.filter(c => c.cost === cost);
+                if (champs.length === 0) return '';
+                return `<div class="drawer-section-title">${cost}コスト</div><div class="drawer-grid">` +
+                    champs.map(c => `<img src="${c.url}" class="asset-icon" data-cost="${c.cost}" title="${c.name}" draggable="true" ondragstart="handleDragStart(event, '${c.url}')" alt="asset">`).join('') +
+                    `</div>`;
+            }).join('');
+            document.getElementById('drawer-champ').innerHTML = champHtml;
+
+            const itemTypes = [{key: 'comp', label: '素材アイテム'}, {key: 'completed', label: '完成アイテム'}, {key: 'emblem', label: '紋章・その他'}];
+            const itemHtml = itemTypes.map(t => {
+                const items = assetData.item.filter(i => i.type === t.key);
+                if (items.length === 0) return '';
+                return `<div class="drawer-section-title">${t.label}</div><div class="drawer-grid">` +
+                    items.map(i => `<img src="${i.url}" class="asset-icon" title="${i.name}" draggable="true" ondragstart="handleDragStart(event, '${i.url}')" alt="asset">`).join('') +
+                    `</div>`;
+            }).join('');
+            document.getElementById('drawer-item').innerHTML = itemHtml;
+
+            const augTiers = [{key: 'silver', label: 'シルバー'}, {key: 'gold', label: 'ゴールド'}, {key: 'prismatic', label: 'プリズマティック'}];
+            const augHtml = augTiers.map(t => {
+                const augs = assetData.aug.filter(a => a.tier === t.key);
+                if (augs.length === 0) return '';
+                return `<div class="drawer-section-title">${t.label}</div><div class="drawer-grid">` +
+                    augs.map(a => `<img src="${a.url}" class="asset-icon" data-tier="${a.tier}" title="${a.name}" draggable="true" ondragstart="handleDragStart(event, '${a.url}')" alt="asset">`).join('') +
+                    `</div>`;
+            }).join('');
+            document.getElementById('drawer-aug').innerHTML = augHtml;
         }
 
         function handleDragStart(e, url) {
             e.dataTransfer.setData('text/html', `<img src="${url}" class="inline-icon" alt="icon">`);
             e.dataTransfer.setData('text/plain', url);
+            e.dataTransfer.setData('application/json', JSON.stringify({ source: 'asset', url: url }));
         }
 
         function addBlock(roundId, blockType) {
@@ -1204,16 +1498,234 @@
             if (round) { const block = round.blocks.find(b => b.id === blockId); if (block) { block.label = label; saveToLocal(); } }
         }
 
+        /* ── Tier & Board Drag Drop Logic ── */
+        function handleTierItemDragStart(e, roundId, blockId, tierId, itemIdx, url) {
+            e.dataTransfer.setData('application/json', JSON.stringify({ source: 'tier', roundId, blockId, tierId, itemIdx, url }));
+            e.dataTransfer.setData('text/plain', url);
+        }
+
+        function handleTierDrop(e, roundId, blockId, targetTierId) {
+            e.preventDefault();
+            e.currentTarget.style.background = 'var(--surface)';
+            const dataStr = e.dataTransfer.getData('application/json');
+            if (!dataStr) return;
+            try {
+                const data = JSON.parse(dataStr);
+                const round = db[currentStage].find(r => r.id === roundId);
+                const block = round.blocks.find(b => b.id === blockId);
+                let tierData = JSON.parse(block.content || '[]');
+                if (data.source === 'tier' && data.blockId === blockId) {
+                    const srcTier = tierData.find(t => t.id === data.tierId);
+                    if (srcTier) srcTier.items.splice(data.itemIdx, 1);
+                }
+                const targetTier = tierData.find(t => t.id === targetTierId);
+                if (targetTier) targetTier.items.push(data.url);
+                block.content = JSON.stringify(tierData);
+                saveToLocal(); renderMainArea();
+            } catch (err) {}
+        }
+
+        function removeTierItem(roundId, blockId, tierId, itemIdx) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let tierData = JSON.parse(block.content || '[]');
+            const tier = tierData.find(t => t.id === tierId);
+            if (tier) tier.items.splice(itemIdx, 1);
+            block.content = JSON.stringify(tierData);
+            saveToLocal(); renderMainArea();
+        }
+
+        function updateTierLabel(roundId, blockId, tierId, label) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let tierData = JSON.parse(block.content || '[]');
+            const tier = tierData.find(t => t.id === tierId);
+            if (tier) tier.label = label;
+            block.content = JSON.stringify(tierData);
+            saveToLocal();
+        }
+
+        function updateTierColor(roundId, blockId, tierId, color) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let tierData = JSON.parse(block.content || '[]');
+            const tier = tierData.find(t => t.id === tierId);
+            if (tier) tier.color = color;
+            block.content = JSON.stringify(tierData);
+            saveToLocal(); renderMainArea();
+        }
+
+        function addTierRow(roundId, blockId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let tierData = JSON.parse(block.content || '[]');
+            tierData.push({ id: genId(), label: 'New', color: '#dddddd', items: [] });
+            block.content = JSON.stringify(tierData);
+            saveToLocal(); renderMainArea();
+        }
+
+        function removeTierRow(roundId, blockId, tierId) {
+            if (!confirm('この行を削除しますか？')) return;
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let tierData = JSON.parse(block.content || '[]');
+            tierData = tierData.filter(t => t.id !== tierId);
+            block.content = JSON.stringify(tierData);
+            saveToLocal(); renderMainArea();
+        }
+
+        function moveTierRow(roundId, blockId, tierId, dir) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let td = JSON.parse(block.content || '[]');
+            const idx = td.findIndex(t => t.id === tierId);
+            if (idx < 0) return;
+            if (dir === -1 && idx > 0) [td[idx-1], td[idx]] = [td[idx], td[idx-1]];
+            else if (dir === 1 && idx < td.length - 1) [td[idx+1], td[idx]] = [td[idx], td[idx+1]];
+            block.content = JSON.stringify(td);
+            saveToLocal(); renderMainArea();
+        }
+
+        function handleBoardItemDragStart(e, roundId, blockId, cellIdx, url) {
+            e.dataTransfer.setData('application/json', JSON.stringify({ source: 'board', roundId, blockId, cellIdx, url }));
+            e.dataTransfer.setData('text/plain', url);
+        }
+
+        function getAssetType(url) {
+            if (assetData.champ.some(c => c.url === url)) return 'champ';
+            if (assetData.item.some(i => i.url === url)) return 'item';
+            if (assetData.aug.some(a => a.url === url)) return 'aug';
+            return 'unknown';
+        }
+
+        function handleBoardDrop(e, roundId, blockId, targetIdx) {
+            e.preventDefault();
+            const dataStr = e.dataTransfer.getData('application/json');
+            if (!dataStr) return;
+            try {
+                const data = JSON.parse(dataStr);
+                const round = db[currentStage].find(r => r.id === roundId);
+                const block = round.blocks.find(b => b.id === blockId);
+                let boardData = JSON.parse(block.content || '[]');
+                if (!Array.isArray(boardData) || boardData.length !== 28) boardData = Array(28).fill(null);
+                
+                const assetType = getAssetType(data.url);
+                if (assetType === 'item') {
+                    if (boardData[targetIdx] && boardData[targetIdx].champ) {
+                        boardData[targetIdx].items = boardData[targetIdx].items || [];
+                        if (boardData[targetIdx].items.length < 3) boardData[targetIdx].items.push(data.url);
+                        else alert('アイテムは最大3個までです');
+                    }
+                } else if (assetType === 'champ' || assetType === 'unknown') {
+                    let moverChampUrl = data.url;
+                    let moverItems = [];
+                    if (data.source === 'board' && data.blockId === blockId) {
+                        const srcCell = boardData[data.cellIdx];
+                        if (srcCell) { moverItems = srcCell.items || []; boardData[data.cellIdx] = null; }
+                    }
+                    const existing = boardData[targetIdx];
+                    boardData[targetIdx] = { champ: moverChampUrl, items: moverItems };
+                    if (existing && data.source === 'board' && data.blockId === blockId) boardData[data.cellIdx] = existing;
+                }
+                block.content = JSON.stringify(boardData);
+                saveToLocal(); renderMainArea();
+            } catch (err) {}
+        }
+
+        function removeBoardChamp(roundId, blockId, cellIdx) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let boardData = JSON.parse(block.content || '[]');
+            boardData[cellIdx] = null;
+            block.content = JSON.stringify(boardData);
+            saveToLocal(); renderMainArea();
+        }
+        
+        function removeBoardItem(e, roundId, blockId, cellIdx, itemIdx) {
+            e.stopPropagation();
+            const round = db[currentStage].find(r => r.id === roundId);
+            const block = round.blocks.find(b => b.id === blockId);
+            let boardData = JSON.parse(block.content || '[]');
+            if (boardData[cellIdx] && boardData[cellIdx].items) boardData[cellIdx].items.splice(itemIdx, 1);
+            block.content = JSON.stringify(boardData);
+            saveToLocal(); renderMainArea();
+        }
+
+        let savedRange = null;
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                let node = range.commonAncestorContainer;
+                if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+                if (node && node.closest('.rich-editor')) {
+                    savedRange = range.cloneRange();
+                }
+            }
+        });
+
+        function applyInlineFormat(editor, key, value) {
+            if (!savedRange) return false;
+            let node = savedRange.commonAncestorContainer;
+            if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+            if (!editor.contains(node)) return false;
+            if (savedRange.collapsed) return false;
+
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(savedRange);
+            document.execCommand('styleWithCSS', false, true);
+
+            if (key === 'color') {
+                document.execCommand('foreColor', false, value);
+            } else {
+                const tempFontName = 'TMP_FONT_' + Date.now();
+                document.execCommand('fontName', false, tempFontName);
+                const elements = editor.querySelectorAll(`span[style*="${tempFontName}"], font[face="${tempFontName}"]`);
+                elements.forEach(el => {
+                    if (el.tagName === 'FONT') {
+                        const span = document.createElement('span');
+                        if (key === 'fontSize') span.style.fontSize = value + 'px';
+                        if (key === 'fontWeight') span.style.fontWeight = value;
+                        span.innerHTML = el.innerHTML;
+                        el.parentNode.replaceChild(span, el);
+                    } else {
+                        el.style.fontFamily = '';
+                        if (key === 'fontSize') el.style.fontSize = value + 'px';
+                        if (key === 'fontWeight') el.style.fontWeight = value;
+                        if (el.getAttribute('style') === '') el.removeAttribute('style');
+                    }
+                });
+            }
+
+            editor.querySelectorAll('span[style=""]').forEach(s => {
+                const frag = document.createDocumentFragment();
+                while(s.firstChild) frag.appendChild(s.firstChild);
+                s.parentNode.replaceChild(frag, s);
+            });
+            return true;
+        }
+
         function updateBlockFormat(roundId, blockId, key, value) {
             const round = db[currentStage].find(r => r.id === roundId);
             if (round) {
                 const block = round.blocks.find(b => b.id === blockId);
                 if (block) {
-                    if (!block.format) block.format = { fontSize: 13, fontWeight: 'normal', color: '' };
-                    block.format[key] = value;
-                    saveToLocal();
                     const editor = document.querySelector(`.rich-editor[data-block-id="${blockId}"]`);
-                    if (editor) applyEditorStyle(editor, block.format);
+                    let inlineApplied = false;
+                    if (editor) {
+                        inlineApplied = applyInlineFormat(editor, key, value);
+                        if (inlineApplied) {
+                            block.content = editor.innerHTML;
+                            saveToLocal();
+                        }
+                    }
+                    if (!inlineApplied) {
+                        if (!block.format) block.format = { fontSize: 13, fontWeight: 'normal', color: '' };
+                        block.format[key] = value;
+                        saveToLocal();
+                        if (editor) applyEditorStyle(editor, block.format);
+                    }
                 }
             }
         }
@@ -1230,9 +1742,39 @@
             if (round) {
                 const block = round.blocks.find(b => b.id === blockId);
                 if (block) {
-                    block.format = { fontSize: 13, fontWeight: 'normal', color: '' };
-                    saveToLocal();
-                    renderMainArea();
+                    const editor = document.querySelector(`.rich-editor[data-block-id="${blockId}"]`);
+                    let inlineApplied = false;
+                    if (editor && savedRange && !savedRange.collapsed) {
+                        let node = savedRange.commonAncestorContainer;
+                        if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+                        if (editor.contains(node)) {
+                            const selection = window.getSelection();
+                            selection.removeAllRanges();
+                            selection.addRange(savedRange);
+                            document.execCommand('removeFormat', false, null);
+                            
+                            const tempFontName = 'TMP_FONT_' + Date.now();
+                            document.execCommand('fontName', false, tempFontName);
+                            const elements = editor.querySelectorAll(`span[style*="${tempFontName}"], font[face="${tempFontName}"]`);
+                            elements.forEach(el => {
+                                if (el.tagName === 'FONT') {
+                                    const text = document.createTextNode(el.textContent);
+                                    el.parentNode.replaceChild(text, el);
+                                } else {
+                                    el.removeAttribute('style');
+                                }
+                            });
+                            
+                            block.content = editor.innerHTML;
+                            saveToLocal();
+                            inlineApplied = true;
+                        }
+                    }
+                    if (!inlineApplied) {
+                        block.format = { fontSize: 13, fontWeight: 'normal', color: '' };
+                        saveToLocal();
+                        renderMainArea();
+                    }
                 }
             }
         }
@@ -1347,6 +1889,8 @@
             if (type === 'bad') return '❌ Bad / Next';
             if (type === 'image') return '📷 画像';
             if (type === 'whiteboard') return '🖌️ スクショ＆手書き';
+            if (type === 'tier') return '🏆 Tierリスト';
+            if (type === 'board') return '♟️ 盤面配置';
             return '';
         }
 
@@ -1378,6 +1922,77 @@
                     <div class="wb-colors">${colorBtns}</div>
                 </div>
                 <div class="wb-canvas-container"><canvas class="whiteboard" data-block-id="${block.id}" data-round-id="${roundId}"></canvas></div>`;
+            } else if (block.type === 'tier') {
+                const tierData = JSON.parse(block.content || '[]');
+                let tierHtml = `<div class="tier-list" id="tier-${block.id}">`;
+                tierData.forEach(t => {
+                    tierHtml += `<div class="tier-row" data-tier-id="${t.id}" ondragover="event.preventDefault(); this.style.background='var(--surface-3)';" ondragleave="this.style.background='var(--surface)';" ondrop="handleTierDrop(event, ${pId}, '${t.id}')">
+                        <div class="tier-label-box" style="background:${t.color};">
+                            <div contenteditable="true" onblur="updateTierLabel(${pId}, '${t.id}', this.innerText)">${t.label}</div>
+                            <input type="color" class="tier-color-picker" value="${t.color}" onchange="updateTierColor(${pId}, '${t.id}', this.value)" title="色を変更">
+                        </div>
+                        <div class="tier-items">
+                            ${t.items.map((url, itemIdx) => `<div class="tier-item" draggable="true" ondragstart="handleTierItemDragStart(event, ${pId}, '${t.id}', ${itemIdx}, '${url}')"><img src="${url}"><button class="del-btn" onclick="removeTierItem(${pId}, '${t.id}', ${itemIdx})">×</button></div>`).join('')}
+                        </div>
+                        <div class="tier-row-controls">
+                            <button class="tier-row-btn" onclick="moveTierRow(${pId}, '${t.id}', -1)" title="上へ">▲</button>
+                            <button class="tier-row-btn" onclick="removeTierRow(${pId}, '${t.id}')" title="削除">×</button>
+                            <button class="tier-row-btn" onclick="moveTierRow(${pId}, '${t.id}', 1)" title="下へ">▼</button>
+                        </div>
+                    </div>`;
+                });
+                tierHtml += `<button class="tier-add-row" onclick="addTierRow(${pId})">＋ 行を追加</button></div>`;
+                contentHTML = tierHtml;
+            } else if (block.type === 'board') {
+                const boardData = JSON.parse(block.content || '[]');
+                
+                let traitCounts = {};
+                let seenIds = new Set();
+                boardData.forEach(cell => {
+                    if (cell && cell.champ) {
+                        const champData = assetData.champ.find(c => c.url === cell.champ);
+                        if (champData && !seenIds.has(champData.name)) {
+                            seenIds.add(champData.name);
+                            let unitTraits = new Set(champData.traits || []);
+                            (cell.items || []).forEach(itUrl => {
+                                const itemData = assetData.item.find(i => i.url === itUrl);
+                                if (itemData && itemData.grantedTrait) unitTraits.add(itemData.grantedTrait);
+                            });
+                            unitTraits.forEach(t => { traitCounts[t] = (traitCounts[t] || 0) + 1; });
+                        }
+                    }
+                });
+
+                let activeTraits = [];
+                for (let t in traitCounts) {
+                    const count = traitCounts[t];
+                    const tiers = TRAIT_TIERS[t] || [2];
+                    if (count >= tiers[0]) {
+                        activeTraits.push({ name: TRAIT_JA[t] || t, count });
+                    }
+                }
+                activeTraits.sort((a, b) => b.count - a.count);
+
+                let traitsHtml = `<div class="board-traits-panel"><div class="board-traits-title">ACTIVE TRAITS</div>`;
+                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: rgba(255,255,255,0.3); text-align: center;">なし</div>`;
+                else activeTraits.forEach(at => { traitsHtml += `<div class="board-trait-item"><span class="board-trait-name">${at.name}</span><span class="board-trait-count">${at.count}</span></div>`; });
+                traitsHtml += `</div>`;
+
+                let boardHtml = `<div class="board-container"><div class="board-grid">`;
+                for(let row = 0; row < 4; row++) {
+                    boardHtml += `<div class="board-row ${row % 2 === 1 ? 'odd' : ''}">`;
+                    for(let col = 0; col < 7; col++) {
+                        const idx = row * 7 + col; const cell = boardData[idx];
+                        boardHtml += `<div class="board-hex-cell" ondragover="event.preventDefault(); this.classList.add('drag-over');" ondragleave="this.classList.remove('drag-over');" ondrop="this.classList.remove('drag-over'); handleBoardDrop(event, ${pId}, ${idx})"><svg class="board-hex-bg" viewBox="0 0 78 78"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20"></polygon></svg>`;
+                        if (cell) {
+                            boardHtml += `<div class="board-hex-champ" draggable="true" ondragstart="handleBoardItemDragStart(event, ${pId}, ${idx}, '${cell.champ}')"><img src="${cell.champ}" class="board-hex-champ-img"><div class="board-hex-champ-overlay"></div><div class="board-hex-items">${(cell.items || []).map((itUrl, iIdx) => `<img src="${itUrl}" class="board-hex-item" onclick="removeBoardItem(event, ${pId}, ${idx}, ${iIdx})" title="クリックでアイテム削除">`).join('')}</div></div><div class="board-hex-del-btn" onclick="removeBoardChamp(${pId}, ${idx})" title="駒を削除">×</div>`;
+                        }
+                        boardHtml += `</div>`;
+                    }
+                    boardHtml += `</div>`;
+                }
+                boardHtml += `</div>${traitsHtml}</div><div style="font-size:11px; color:var(--ink-xlight); text-align:center; margin-top:8px;">※アイテムは駒の上にドロップ。アイテムクリックで削除。</div>`;
+                contentHTML = boardHtml;
             }
 
             const isTextBlock = (block.type === 'text' || block.type === 'good' || block.type === 'bad');
@@ -1510,6 +2125,8 @@
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'bad')">＋ Bad</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'image')">＋ 画像</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'whiteboard')">＋ 手書き</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'tier')">＋ Tierリスト</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'board')">＋ 盤面</button>
                     </div>
                 </div>`;
             });
@@ -1547,21 +2164,86 @@
                         valid.forEach(b => {
                             const fmt = b.format || {};
                             const fmtStyle = `font-size:${fmt.fontSize||13}px;font-weight:${fmt.fontWeight||'normal'};${fmt.color?'color:'+fmt.color+';':''}`;
-                            const customLabel = (b.label !== null && b.label !== undefined && b.label !== '') ? b.label : null;
+                            const defaultLabel = getBlockLabel(b.type);
+                            const displayLabel = (b.label !== null && b.label !== undefined && b.label !== '') ? b.label : defaultLabel;
+                            const labelHtml = `<div style="font-size:12px;font-weight:700;color:var(--ink-mid);margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--border-strong);display:inline-block;padding-right:24px;">${displayLabel}</div>`;
 
                             if (b.type === 'text') {
-                                const labelHtml = customLabel ? `<div style="font-size:11px;font-weight:700;color:var(--ink-xlight);margin-bottom:4px;letter-spacing:0.5px;text-transform:uppercase;">${customLabel}</div>` : '';
                                 stageHTML += `<div class="sum-block">${labelHtml}<div class="sum-text" style="${fmtStyle}">${b.content}</div></div>`;
                             }
                             if (b.type === 'good') {
-                                const lbl = customLabel !== null ? customLabel : '✅ Good';
-                                stageHTML += `<div class="sum-block sum-text good" style="${fmtStyle}"><strong>${lbl}:</strong><br>${b.content}</div>`;
+                                stageHTML += `<div class="sum-block">${labelHtml}<div class="sum-text good" style="${fmtStyle}">${b.content}</div></div>`;
                             }
                             if (b.type === 'bad') {
-                                const lbl = customLabel !== null ? customLabel : '❌ Bad / Next';
-                                stageHTML += `<div class="sum-block sum-text bad" style="${fmtStyle}"><strong>${lbl}:</strong><br>${b.content}</div>`;
+                                stageHTML += `<div class="sum-block">${labelHtml}<div class="sum-text bad" style="${fmtStyle}">${b.content}</div></div>`;
                             }
-                            if (b.type === 'image' || b.type === 'whiteboard') stageHTML += `<div class="sum-block"><img src="${b.content}" class="sum-img"></div>`;
+                            if (b.type === 'image' || b.type === 'whiteboard') stageHTML += `<div class="sum-block">${labelHtml}<br><img src="${b.content}" class="sum-img" style="margin-top:4px;"></div>`;
+                            if (b.type === 'tier') {
+                                const tierData = JSON.parse(b.content || '[]');
+                                let tHtml = `<div class="sum-block">${labelHtml}<div style="border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; display: flex; flex-direction: column; gap: 1px; background: var(--surface-2);">`;
+                                tierData.forEach(t => {
+                                    tHtml += `<div style="display: flex; background: var(--surface); min-height: 44px;"><div style="width: 60px; background: ${t.color}; display: flex; align-items: center; justify-content: center; font-weight: bold; border-right: 1px solid var(--border);">${t.label}</div><div style="flex: 1; padding: 6px; display: flex; flex-wrap: wrap; gap: 4px;">${t.items.map(url => `<img src="${url}" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">`).join('')}</div></div>`;
+                                });
+                                tHtml += `</div></div>`;
+                                stageHTML += tHtml;
+                            }
+                            if (b.type === 'board') {
+                                const boardData = JSON.parse(b.content || '[]');
+                                
+                                let traitCounts = {};
+                                let seenIds = new Set();
+                                boardData.forEach(cell => {
+                                    if (cell && cell.champ) {
+                                        const champData = assetData.champ.find(c => c.url === cell.champ);
+                                        if (champData && !seenIds.has(champData.name)) {
+                                            seenIds.add(champData.name);
+                                            let unitTraits = new Set(champData.traits || []);
+                                            (cell.items || []).forEach(itUrl => {
+                                                const itemData = assetData.item.find(i => i.url === itUrl);
+                                                if (itemData && itemData.grantedTrait) unitTraits.add(itemData.grantedTrait);
+                                            });
+                                            unitTraits.forEach(t => { traitCounts[t] = (traitCounts[t] || 0) + 1; });
+                                        }
+                                    }
+                                });
+
+                                let activeTraits = [];
+                                for (let t in traitCounts) {
+                                    const count = traitCounts[t];
+                                    const tiers = TRAIT_TIERS[t] || [2];
+                                    if (count >= tiers[0]) activeTraits.push({ name: TRAIT_JA[t] || t, count });
+                                }
+                                activeTraits.sort((a, b) => b.count - a.count);
+
+                                let traitsHtml = `<div style="width: 140px; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 6px;">`;
+                                traitsHtml += `<div style="font-size: 11px; color: var(--gold-light); font-weight: bold; text-align: center; margin-bottom: 6px; letter-spacing: 1px;">ACTIVE TRAITS</div>`;
+                                if (activeTraits.length === 0) traitsHtml += `<div style="font-size: 11px; color: rgba(255,255,255,0.4); text-align: center;">なし</div>`;
+                                else activeTraits.forEach(at => { traitsHtml += `<div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px;"><span style="font-size: 11px; color: white; font-weight: 600;">${at.name}</span><span style="font-size: 11px; color: var(--gold-light); font-weight: 700; background: rgba(0,0,0,0.5); padding: 0 5px; border-radius: 4px;">${at.count}</span></div>`; });
+                                traitsHtml += `</div>`;
+
+                                let bHtml = `<div class="sum-block">${labelHtml}<div style="background: #0f172a; padding: 16px; border-radius: var(--radius-sm); display: flex; gap: 20px; align-items: flex-start; justify-content: center;"><div style="display: flex; flex-direction: column; gap: 2px;">`;
+                                for(let row = 0; row < 4; row++) {
+                                    bHtml += `<div style="display: flex; gap: 2px; ${row % 2 === 1 ? 'margin-left: 20px;' : ''}">`;
+                                    for(let col = 0; col < 7; col++) {
+                                        const cell = boardData[row * 7 + col];
+                                        bHtml += `<div style="width: 40px; height: 40px; position: relative;"><svg viewBox="0 0 78 78" style="width:100%;height:100%;"><polygon points="39,2 76,20 76,58 39,76 2,58 2,20" fill="rgba(255,255,255,0.1)"></polygon></svg>`;
+                                        if (cell) {
+                                            bHtml += `<div style="position:absolute; inset:2px; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: #000; display:flex; align-items:center; justify-content:center;"><img src="${cell.champ}" style="width:100%;height:100%;object-fit:cover;"></div>`;
+                                            if (cell.items && cell.items.length > 0) {
+                                                bHtml += `<div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); display: flex; gap: 1px; z-index: 2;">`;
+                                                cell.items.forEach(itUrl => {
+                                                    bHtml += `<img src="${itUrl}" style="width: 12px; height: 12px; border: 1px solid rgba(255,255,255,0.8); border-radius: 1px;">`;
+                                                });
+                                                bHtml += `</div>`;
+                                            }
+                                        }
+                                        bHtml += `</div>`;
+                                    }
+                                    bHtml += `</div>`;
+                                }
+                                bHtml += `</div>${traitsHtml}</div></div>`;
+                                stageHTML += bHtml;
+                            }
                         });
                         stageHTML += `</div>`;
                     }
