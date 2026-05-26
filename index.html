@@ -14,32 +14,34 @@
         .stage-btn { background-color: #f1f2f6; color: #2d3436; border: 1px solid transparent; padding: 12px 15px; border-radius: 6px; text-align: left; cursor: pointer; font-size: 1rem; font-weight: 500; transition: 0.2s; }
         .stage-btn:hover { background-color: #dfe4ea; }
         .stage-btn.active { background-color: #0984e3; color: white; box-shadow: 0 4px 6px rgba(9, 132, 227, 0.2); }
+        .home-btn { background-color: #2d3436; color: white; margin-bottom: 10px; }
+        .home-btn:hover { background-color: #636e72; }
+        .home-btn.active { background-color: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .summary-btn { margin-top: auto; background-color: #00b894; color: white; font-weight: bold; }
         .summary-btn.active { background-color: #009477; }
 
-        /* メインコンテンツ（ボトムバーの分だけ下部余白を追加） */
+        /* メインコンテンツ */
         .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; position: relative; padding-bottom: 100px; }
         .main-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #dfe4ea; padding-bottom: 15px; margin-bottom: 25px; }
-        .main-header h1 { margin: 0; font-size: 2rem; color: #2d3436; }
         
-        /* 🌟 ボトム・ナビゲーションバー（画面下部固定） */
-        .bottom-action-bar {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%); /* サイドバーがあるためJavaScriptで動的に位置調整します */
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 12px 25px;
-            border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            display: flex;
-            gap: 15px;
-            z-index: 50;
-            border: 1px solid rgba(223, 228, 234, 0.8);
-            transition: 0.3s;
-        }
-        /* レポート画面ではボトムバーを隠す用 */
+        /* ノートタイトルの編集用スタイル */
+        .session-title-input { font-size: 2rem; font-weight: bold; color: #2d3436; border: 1px solid transparent; background: transparent; padding: 5px 10px; border-radius: 8px; width: 60%; transition: 0.2s; }
+        .session-title-input:hover, .session-title-input:focus { border-color: #0984e3; background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.1); }
+        
+        /* 🌟 ホーム画面（履歴）のスタイル */
+        .home-view { padding: 10px; }
+        .home-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .session-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .session-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #dfe4ea; transition: 0.2s; cursor: pointer; display: flex; flex-direction: column; height: 120px; }
+        .session-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(9, 132, 227, 0.15); border-color: #74b9ff; }
+        .session-card h3 { margin: 0 0 10px 0; color: #2d3436; font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .session-card .date { font-size: 0.9rem; color: #a4b0be; margin-bottom: auto; }
+        .session-card-actions { display: flex; justify-content: flex-end; }
+        .delete-session-btn { background: #ffeaa7; color: #d63031; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .delete-session-btn:hover { background: #ff7675; color: white; }
+
+        /* ボトム・ナビゲーションバー */
+        .bottom-action-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 12px 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; gap: 15px; z-index: 50; border: 1px solid rgba(223, 228, 234, 0.8); transition: 0.3s; }
         .bottom-action-bar.hidden { display: none; }
 
         /* 汎用ボタン */
@@ -73,8 +75,6 @@
         .rich-editor:empty:before { content: attr(placeholder); color: #b2bec3; pointer-events: none; }
         .rich-editor:focus { outline: none; background-color: #fff; border-color: #0984e3; }
         .inline-icon { width: 28px; height: 28px; vertical-align: middle; border-radius: 4px; margin: 0 4px; border: 1px solid #dfe4ea; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .block-item.type-good .block-toolbar strong { color: #00b894; }
-        .block-item.type-bad .block-toolbar strong { color: #d63031; }
 
         /* 画像＆ホワイトボードUI */
         .image-upload-area { width: 100%; border: 2px dashed #ced6e0; border-radius: 8px; padding: 20px; text-align: center; color: #a4b0be; box-sizing: border-box; background: #fcfcfc; }
@@ -137,6 +137,8 @@
 <body>
 
     <div class="sidebar">
+        <button id="home-btn" class="stage-btn home-btn active" onclick="showHome()">🏠 ホーム (履歴)</button>
+        
         <h2>ステージ選択</h2>
         <div id="stage-list"></div>
         <button id="summary-btn" class="stage-btn summary-btn" onclick="showSummary()">📝 レポート出力</button>
@@ -144,7 +146,7 @@
 
     <div class="main-content" id="main-content"></div>
 
-    <div id="bottom-action-bar" class="bottom-action-bar">
+    <div id="bottom-action-bar" class="bottom-action-bar hidden">
         <button class="btn btn-blue" onclick="toggleDrawer()">🎒 アセットパネル</button>
         <button class="btn btn-yellow" onclick="addRound()">＋ 枠を追加 (ラウンド/メモ)</button>
     </div>
@@ -165,37 +167,113 @@
     </div>
 
     <script>
-        // --- 状態管理 ---
+        // --- 状態管理 (V4: マルチセッション対応) ---
         const stages = ['Stage 1', 'Stage 2', 'Stage 3', 'Stage 4', 'Stage 5', 'Stage 6', 'Stage 7'];
-        let currentStage = 'Stage 2';
+        let currentStage = 'Home';
+        
+        let appData = {
+            sessions: {},
+            currentId: null
+        };
         let db = {};
         
-        function initDB() { stages.forEach(s => { db[s] = []; }); }
         const genId = () => 'id_' + Date.now() + Math.random().toString(36).substr(2, 9);
         function createBlock(type) { return { id: genId(), type: type, content: null }; }
         function createRound(name) { return { id: genId(), name: name, blocks: [createBlock('text')] }; }
 
-        function saveToLocal() { localStorage.setItem('tftCoachingData_v3', JSON.stringify(db)); }
-        function loadFromLocal() {
-            const saved = localStorage.getItem('tftCoachingData_v3');
-            if (saved) { db = JSON.parse(saved); } 
-            else { initDB(); db['Stage 2'].push(createRound('ステージ2 全体方針')); db['Stage 3'].push(createRound('3-2')); }
+        function createInitialDB() {
+            let newDb = {};
+            stages.forEach(s => newDb[s] = []);
+            newDb['Stage 2'].push(createRound('ステージ2 全体方針'));
+            newDb['Stage 3'].push(createRound('3-2'));
+            return newDb;
         }
 
-        // --- ボトムバーの位置調整 ---
-        // サイドバー(240px + padding)があるため、画面全体の中央ではなく「メインコンテンツの中央」に配置する
+        // --- データ移行＆ロード ---
+        function saveToLocal() { 
+            localStorage.setItem('tftCoachingData_v4', JSON.stringify(appData)); 
+        }
+        
+        function loadFromLocal() {
+            const savedV4 = localStorage.getItem('tftCoachingData_v4');
+            if (savedV4) {
+                appData = JSON.parse(savedV4);
+            } else {
+                // V3からのデータ引き継ぎ処理
+                const savedV3 = localStorage.getItem('tftCoachingData_v3');
+                const newId = genId();
+                appData = {
+                    sessions: {
+                        [newId]: {
+                            id: newId,
+                            title: '過去のコーチングノート',
+                            date: new Date().toISOString(),
+                            data: savedV3 ? JSON.parse(savedV3) : createInitialDB()
+                        }
+                    },
+                    currentId: newId
+                };
+                saveToLocal();
+            }
+            if(appData.currentId && appData.sessions[appData.currentId]) {
+                db = appData.sessions[appData.currentId].data;
+            }
+        }
+
+        function formatDate(isoString) {
+            const d = new Date(isoString);
+            return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+
+        // --- セッション（ノート）管理 ---
+        function createNewSession() {
+            const id = genId();
+            appData.sessions[id] = {
+                id: id,
+                title: '新規コーチングノート',
+                date: new Date().toISOString(),
+                data: createInitialDB()
+            };
+            loadSession(id);
+        }
+
+        function loadSession(id) {
+            appData.currentId = id;
+            db = appData.sessions[id].data;
+            currentStage = 'Stage 2'; 
+            saveToLocal();
+            renderSidebar();
+            renderMainArea();
+        }
+
+        function deleteSession(e, id) {
+            e.stopPropagation();
+            if(confirm('このコーチングノートを完全に削除しますか？')) {
+                delete appData.sessions[id];
+                if(appData.currentId === id) appData.currentId = null;
+                saveToLocal();
+                showHome();
+            }
+        }
+
+        function updateSessionTitle(title) {
+            if(appData.currentId) {
+                appData.sessions[appData.currentId].title = title;
+                saveToLocal();
+            }
+        }
+
+        // --- ボトムバーの位置調整 (エラー修正版) ---
         function adjustBottomBarPosition() {
-            const bottomBar = document.getElementById('bottom-action-bar');
-            const mainContent = document.querySelector('.main-content');
-            if (bottomBar && mainContent) {
-                // 左側のサイドバー幅（280px）を考慮して中心を計算
+            const bar = document.getElementById('bottom-action-bar');
+            if (bar) {
                 const mainWidth = window.innerWidth - 280;
-                bottomBar.style.left = `calc(280px + ${mainWidth / 2}px)`;
+                bar.style.left = `calc(280px + ${mainWidth / 2}px)`;
             }
         }
         window.addEventListener('resize', adjustBottomBarPosition);
 
-        // --- アセットデータ（画像URLリスト） ---
+        // --- アセットデータ ---
         const assetData = {
             champ: [
                 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/51.png', 
@@ -229,7 +307,7 @@
             'ショウジン': assetData.item[3], 'しょうじん': assetData.item[3]
         };
 
-        // --- テキスト変換（オートコンプリート） ---
+        // --- テキスト変換 ---
         let isComposing = false;
         document.addEventListener('compositionstart', () => isComposing = true);
         document.addEventListener('compositionend', () => isComposing = false);
@@ -254,19 +332,15 @@
                         node.textContent = newTextBefore;
                         
                         const img = document.createElement('img');
-                        img.src = url;
-                        img.className = 'inline-icon';
-                        img.alt = key;
+                        img.src = url; img.className = 'inline-icon'; img.alt = key;
                         
                         const afterTextNode = document.createTextNode(textAfterCursor);
                         node.parentNode.insertBefore(img, node.nextSibling);
                         node.parentNode.insertBefore(afterTextNode, img.nextSibling);
                         
                         const newRange = document.createRange();
-                        newRange.setStart(afterTextNode, 0);
-                        newRange.collapse(true);
-                        selection.removeAllRanges();
-                        selection.addRange(newRange);
+                        newRange.setStart(afterTextNode, 0); newRange.collapse(true);
+                        selection.removeAllRanges(); selection.addRange(newRange);
                         break; 
                     }
                 }
@@ -279,20 +353,16 @@
         function switchDrawerTab(tabId, btn) {
             document.querySelectorAll('.drawer-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.drawer-content').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(`drawer-${tabId}`).classList.add('active');
+            btn.classList.add('active'); document.getElementById(`drawer-${tabId}`).classList.add('active');
         }
         function renderDrawerAssets() {
             Object.keys(assetData).forEach(type => {
                 const container = document.getElementById(`drawer-${type}`);
-                container.innerHTML = assetData[type].map(url => 
-                    `<img src="${url}" class="asset-icon" draggable="true" ondragstart="handleDragStart(event, '${url}')" alt="asset">`
-                ).join('');
+                container.innerHTML = assetData[type].map(url => `<img src="${url}" class="asset-icon" draggable="true" ondragstart="handleDragStart(event, '${url}')" alt="asset">`).join('');
             });
         }
         function handleDragStart(e, url) {
-            const imgHtml = `<img src="${url}" class="inline-icon" alt="icon">`;
-            e.dataTransfer.setData('text/html', imgHtml);
+            e.dataTransfer.setData('text/html', `<img src="${url}" class="inline-icon" alt="icon">`);
             e.dataTransfer.setData('text/plain', url);
         }
 
@@ -301,18 +371,9 @@
             const round = db[currentStage].find(r => r.id === roundId);
             if (round) round.blocks.push(createBlock(blockType));
             saveToLocal(); renderMainArea();
-            
-            // 枠を追加したときに、一番下までスクロールさせる
-            setTimeout(() => {
-                const mainContent = document.getElementById('main-content');
-                mainContent.scrollTo({ top: mainContent.scrollHeight, behavior: 'smooth' });
-            }, 100);
+            setTimeout(() => { const mc = document.getElementById('main-content'); mc.scrollTo({ top: mc.scrollHeight, behavior: 'smooth' }); }, 100);
         }
-        function deleteBlock(roundId, blockId) {
-            const round = db[currentStage].find(r => r.id === roundId);
-            if (round) round.blocks = round.blocks.filter(b => b.id !== blockId);
-            saveToLocal(); renderMainArea();
-        }
+        function deleteBlock(roundId, blockId) { db[currentStage].find(r => r.id === roundId).blocks = db[currentStage].find(r => r.id === roundId).blocks.filter(b => b.id !== blockId); saveToLocal(); renderMainArea(); }
         function moveBlock(roundId, blockId, direction) {
             let arr = db[currentStage].find(r => r.id === roundId).blocks;
             const idx = arr.findIndex(b => b.id === blockId);
@@ -322,22 +383,12 @@
             saveToLocal(); renderMainArea();
         }
         function updateBlockContent(roundId, blockId, content) {
-            let round = db[currentStage].find(r => r.id === roundId);
-            if(round) {
-                const block = round.blocks.find(b => b.id === blockId);
-                if (block) { block.content = content; saveToLocal(); }
-            }
+            const round = db[currentStage].find(r => r.id === roundId);
+            if(round) { const block = round.blocks.find(b => b.id === blockId); if (block) { block.content = content; saveToLocal(); } }
         }
         function addRound() { 
-            db[currentStage].push(createRound('')); 
-            saveToLocal(); 
-            renderMainArea(); 
-            
-            // 新規ラウンド追加時に自動スクロール
-            setTimeout(() => {
-                const mainContent = document.getElementById('main-content');
-                mainContent.scrollTo({ top: mainContent.scrollHeight, behavior: 'smooth' });
-            }, 100);
+            db[currentStage].push(createRound('')); saveToLocal(); renderMainArea(); 
+            setTimeout(() => { const mc = document.getElementById('main-content'); mc.scrollTo({ top: mc.scrollHeight, behavior: 'smooth' }); }, 100);
         }
         function deleteRound(roundId) { if(confirm('この枠を削除しますか？')) { db[currentStage] = db[currentStage].filter(r => r.id !== roundId); saveToLocal(); renderMainArea(); } }
         function updateRoundName(roundId, name) { const round = db[currentStage].find(r => r.id === roundId); if(round) { round.name = name; saveToLocal(); } }
@@ -356,28 +407,16 @@
         const wbColors = ['#2d3436', '#d63031', '#0984e3', '#00b894', '#fdcb6e', '#e17055', '#6c5ce7', '#fd79a8', '#00cec9', '#b2bec3'];
 
         function initWhiteboards() {
-            const elements = document.querySelectorAll('.whiteboard');
-            elements.forEach(canvas => {
+            if(currentStage === 'Home' || currentStage === 'Summary') return;
+            document.querySelectorAll('.whiteboard').forEach(canvas => {
                 if (canvas.dataset.initialized) return;
-                const blockId = canvas.dataset.blockId;
-                const roundId = canvas.dataset.roundId;
-                const ctx = canvas.getContext('2d');
-                
-                canvas.width = 1280; canvas.height = 720; 
-                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                
-                let arr = db[currentStage].find(r => r.id === roundId).blocks;
-                const block = arr.find(b => b.id === blockId);
-
+                const blockId = canvas.dataset.blockId; const roundId = canvas.dataset.roundId; const ctx = canvas.getContext('2d');
+                canvas.width = 1280; canvas.height = 720; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                const block = db[currentStage].find(r => r.id === roundId).blocks.find(b => b.id === blockId);
                 canvases[blockId] = { canvas, ctx, isDrawing: false, color: '#d63031', isEraser: false, roundId, blockId, undoStack: [], redoStack: [] };
-
                 if (block && block.content) {
-                    let img = new Image();
-                    img.onload = () => { ctx.drawImage(img, 0, 0); saveWbState(blockId); };
-                    img.src = block.content;
-                } else {
-                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); saveWbState(blockId); 
-                }
+                    let img = new Image(); img.onload = () => { ctx.drawImage(img, 0, 0); saveWbState(blockId); }; img.src = block.content;
+                } else { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); saveWbState(blockId); }
 
                 canvas.addEventListener('mousedown', (e) => startDraw(e, blockId));
                 canvas.addEventListener('mousemove', (e) => draw(e, blockId));
@@ -386,78 +425,48 @@
                 canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e.touches[0], blockId); }, {passive: false});
                 canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0], blockId); }, {passive: false});
                 canvas.addEventListener('touchend', () => stopDraw(blockId));
-                canvas.dataset.initialized = "true";
-                updateWbUI(blockId);
+                canvas.dataset.initialized = "true"; updateWbUI(blockId);
             });
         }
-
-        function saveWbState(id) {
-            const cvs = canvases[id];
-            if (cvs.undoStack.length >= 20) cvs.undoStack.shift();
-            cvs.undoStack.push(cvs.canvas.toDataURL());
-            cvs.redoStack = []; 
-        }
-
+        function saveWbState(id) { const cvs = canvases[id]; if (cvs.undoStack.length >= 20) cvs.undoStack.shift(); cvs.undoStack.push(cvs.canvas.toDataURL()); cvs.redoStack = []; }
         window.handleWbBgUpload = function(e, roundId, blockId) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
+            const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
             reader.onload = function(evt) {
                 const img = new Image();
                 img.onload = function() {
-                    const cvs = canvases[blockId];
-                    cvs.ctx.fillStyle = '#ffffff'; cvs.ctx.fillRect(0, 0, cvs.canvas.width, cvs.canvas.height);
-                    const hRatio = cvs.canvas.width / img.width; const vRatio = cvs.canvas.height / img.height;
-                    const ratio = Math.min(hRatio, vRatio);
-                    const centerShift_x = (cvs.canvas.width - img.width * ratio) / 2;
-                    const centerShift_y = (cvs.canvas.height - img.height * ratio) / 2;
-                    cvs.ctx.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
-                    saveWbState(blockId);
-                    updateBlockContent(roundId, blockId, cvs.undoStack[cvs.undoStack.length - 1]);
+                    const cvs = canvases[blockId]; cvs.ctx.fillStyle = '#ffffff'; cvs.ctx.fillRect(0, 0, cvs.canvas.width, cvs.canvas.height);
+                    const ratio = Math.min(cvs.canvas.width / img.width, cvs.canvas.height / img.height);
+                    cvs.ctx.drawImage(img, 0, 0, img.width, img.height, (cvs.canvas.width - img.width * ratio) / 2, (cvs.canvas.height - img.height * ratio) / 2, img.width * ratio, img.height * ratio);
+                    saveWbState(blockId); updateBlockContent(roundId, blockId, cvs.undoStack[cvs.undoStack.length - 1]);
                 }
                 img.src = evt.target.result;
             }
             reader.readAsDataURL(file); e.target.value = '';
         }
-
         function getMousePos(canvas, evt) { const rect = canvas.getBoundingClientRect(); return { x: (evt.clientX - rect.left) * (canvas.width / rect.width), y: (evt.clientY - rect.top) * (canvas.height / rect.height) }; }
         function startDraw(e, id) { canvases[id].isDrawing = true; canvases[id].ctx.beginPath(); draw(e, id); }
         function draw(e, id) {
-            const cvs = canvases[id];
-            if(!cvs.isDrawing) return;
-            const pos = getMousePos(cvs.canvas, e);
-            cvs.ctx.strokeStyle = cvs.isEraser ? '#ffffff' : cvs.color;
-            cvs.ctx.lineWidth = cvs.isEraser ? 40 : 5; 
+            const cvs = canvases[id]; if(!cvs.isDrawing) return; const pos = getMousePos(cvs.canvas, e);
+            cvs.ctx.strokeStyle = cvs.isEraser ? '#ffffff' : cvs.color; cvs.ctx.lineWidth = cvs.isEraser ? 40 : 5; 
             cvs.ctx.lineTo(pos.x, pos.y); cvs.ctx.stroke(); cvs.ctx.beginPath(); cvs.ctx.moveTo(pos.x, pos.y);
         }
-        function stopDraw(id) {
-            const cvs = canvases[id];
-            if(!cvs.isDrawing) return;
-            cvs.isDrawing = false; cvs.ctx.beginPath();
-            saveWbState(id); updateBlockContent(cvs.roundId, cvs.blockId, cvs.undoStack[cvs.undoStack.length - 1]);
-        }
+        function stopDraw(id) { const cvs = canvases[id]; if(!cvs.isDrawing) return; cvs.isDrawing = false; cvs.ctx.beginPath(); saveWbState(id); updateBlockContent(cvs.roundId, cvs.blockId, cvs.undoStack[cvs.undoStack.length - 1]); }
         window.setWbColor = function(blockId, color) { canvases[blockId].color = color; canvases[blockId].isEraser = false; updateWbUI(blockId); }
         window.setWbEraser = function(blockId) { canvases[blockId].isEraser = true; updateWbUI(blockId); }
         window.wbUndo = function(id) {
             const cvs = canvases[id];
             if (cvs.undoStack.length > 1) {
-                cvs.redoStack.push(cvs.undoStack.pop());
-                const prevState = cvs.undoStack[cvs.undoStack.length - 1];
-                const img = new Image();
-                img.onload = () => { cvs.ctx.clearRect(0, 0, cvs.canvas.width, cvs.canvas.height); cvs.ctx.drawImage(img, 0, 0); };
-                img.src = prevState;
-                updateBlockContent(cvs.roundId, cvs.blockId, prevState);
+                cvs.redoStack.push(cvs.undoStack.pop()); const prevState = cvs.undoStack[cvs.undoStack.length - 1];
+                const img = new Image(); img.onload = () => { cvs.ctx.clearRect(0, 0, cvs.canvas.width, cvs.canvas.height); cvs.ctx.drawImage(img, 0, 0); };
+                img.src = prevState; updateBlockContent(cvs.roundId, cvs.blockId, prevState);
             }
         }
         window.wbRedo = function(id) {
             const cvs = canvases[id];
             if (cvs.redoStack.length > 0) {
-                const nextState = cvs.redoStack.pop();
-                cvs.undoStack.push(nextState);
-                const img = new Image();
-                img.onload = () => { cvs.ctx.clearRect(0, 0, cvs.canvas.width, cvs.canvas.height); cvs.ctx.drawImage(img, 0, 0); };
-                img.src = nextState;
-                updateBlockContent(cvs.roundId, cvs.blockId, nextState);
+                const nextState = cvs.redoStack.pop(); cvs.undoStack.push(nextState);
+                const img = new Image(); img.onload = () => { cvs.ctx.clearRect(0, 0, cvs.canvas.width, cvs.canvas.height); cvs.ctx.drawImage(img, 0, 0); };
+                img.src = nextState; updateBlockContent(cvs.roundId, cvs.blockId, nextState);
             }
         }
         window.clearWb = function(blockId) {
@@ -469,18 +478,13 @@
         function updateWbUI(blockId) {
             const cvs = canvases[blockId]; if(!cvs) return;
             document.querySelectorAll(`.color-btn-${blockId}`).forEach(btn => { btn.classList.remove('active'); if(!cvs.isEraser && btn.dataset.color === cvs.color) btn.classList.add('active'); });
-            const eraserBtn = document.getElementById(`eraser-${blockId}`);
-            if(eraserBtn) { if(cvs.isEraser) eraserBtn.classList.add('active'); else eraserBtn.classList.remove('active'); }
+            const eraserBtn = document.getElementById(`eraser-${blockId}`); if(eraserBtn) { if(cvs.isEraser) eraserBtn.classList.add('active'); else eraserBtn.classList.remove('active'); }
         }
 
-        // --- ブロック描画ロジック ---
+        // --- ブロック生成 ---
         function getBlockIconAndLabel(type) {
-            if(type==='text') return '📝 テキスト';
-            if(type==='good') return '🟢 Good';
-            if(type==='bad') return '🔴 Bad';
-            if(type==='image') return '📷 画像';
-            if(type==='whiteboard') return '🖌️ スクショ＆手書き';
-            return '';
+            if(type==='text') return '📝 テキスト'; if(type==='good') return '🟢 Good'; if(type==='bad') return '🔴 Bad';
+            if(type==='image') return '📷 画像'; if(type==='whiteboard') return '🖌️ スクショ＆手書き'; return '';
         }
 
         function generateBlockHTML(block, roundId) {
@@ -489,8 +493,7 @@
 
             if (block.type === 'text' || block.type === 'good' || block.type === 'bad') {
                 contentHTML = `<div class="rich-editor" contenteditable="true" placeholder="メモを入力... (例: けいとりん と打つとアイコンになります)" 
-                                oninput="handleRichTextInput(event, this, ${pId})" 
-                                onkeyup="handleRichTextInput(event, this, ${pId})"
+                                oninput="handleRichTextInput(event, this, ${pId})" onkeyup="handleRichTextInput(event, this, ${pId})"
                                 ondrop="setTimeout(()=>updateBlockContent(${pId}, this.innerHTML), 100)">${block.content || ''}</div>`;
             } else if (block.type === 'image') {
                 contentHTML = block.content ? `<div class="image-preview"><img src="${block.content}" alt="Image"></div><div style="margin-top:10px; text-align:center;"><input type="file" accept="image/*" onchange="handleImageUpload(event, ${pId})"></div>`
@@ -514,32 +517,92 @@
             </div>`;
         }
 
-        const stageList = document.getElementById('stage-list');
+        // --- 画面描画制御 ---
         const mainContent = document.getElementById('main-content');
-        const bottomBar = document.getElementById('bottom-action-bar');
 
         function renderSidebar() {
+            const stageList = document.getElementById('stage-list');
             stageList.innerHTML = '';
+            
+            const homeBtn = document.getElementById('home-btn');
+            if(currentStage === 'Home') homeBtn.classList.add('active');
+            else homeBtn.classList.remove('active');
+            
             stages.forEach(stage => {
                 const btn = document.createElement('button');
                 btn.className = `stage-btn ${stage === currentStage ? 'active' : ''}`;
                 btn.innerText = stage;
-                btn.onclick = () => { currentStage = stage; renderSidebar(); renderMainArea(); };
+                btn.onclick = () => { 
+                    if(appData.currentId) {
+                        currentStage = stage; renderSidebar(); renderMainArea(); 
+                    } else {
+                        alert('まずはホーム画面からノートを選択するか、新しく作成してください。');
+                    }
+                };
                 stageList.appendChild(btn);
             });
-            if(currentStage !== 'Summary') {
-                document.getElementById('summary-btn').classList.remove('active');
-                bottomBar.classList.remove('hidden'); // 入力画面ではボトムバーを表示
+
+            const summaryBtn = document.getElementById('summary-btn');
+            if(currentStage === 'Summary') summaryBtn.classList.add('active');
+            else summaryBtn.classList.remove('active');
+
+            const bar = document.getElementById('bottom-action-bar');
+            if(currentStage === 'Home' || currentStage === 'Summary' || !appData.currentId) {
+                bar?.classList.add('hidden');
+            } else {
+                bar?.classList.remove('hidden');
+                adjustBottomBarPosition();
             }
         }
 
+        function showHome() {
+            currentStage = 'Home';
+            renderSidebar();
+            
+            let html = `
+                <div class="home-view">
+                    <div class="home-header">
+                        <h1 style="margin:0; font-size: 2rem; color: #2d3436;">📂 コーチングノート履歴</h1>
+                        <button class="btn btn-blue" onclick="createNewSession()" style="font-size: 1.1rem; padding: 12px 25px;">＋ 新しいノートを作成</button>
+                    </div>
+                    <div class="session-grid">
+            `;
+            
+            const sortedSessions = Object.values(appData.sessions).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (sortedSessions.length === 0) {
+                html += `<p style="color: #636e72;">保存されたノートがありません。「＋ 新しいノートを作成」から始めてください。</p>`;
+            } else {
+                sortedSessions.forEach(session => {
+                    html += `
+                        <div class="session-card" onclick="loadSession('${session.id}')">
+                            <h3>${session.title}</h3>
+                            <div class="date">作成日: ${formatDate(session.date)}</div>
+                            <div class="session-card-actions">
+                                <button class="delete-session-btn" onclick="deleteSession(event, '${session.id}')">削除</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `</div></div>`;
+            mainContent.innerHTML = html;
+        }
+
         function renderMainArea() {
+            if(currentStage === 'Home' || currentStage === 'Summary') return;
+            if(!appData.currentId) { showHome(); return; }
+
+            const session = appData.sessions[appData.currentId];
+
             let html = `
                 <div class="main-header">
-                    <h1>${currentStage}</h1>
-                </div>`; // ヘッダー右上にあったボタン群は削除
+                    <input type="text" class="session-title-input" value="${session.title}" onchange="updateSessionTitle(this.value)" placeholder="ノートのタイトルを入力">
+                    <h2 style="margin: 0; color: #0984e3; font-size: 1.5rem;">${currentStage}</h2>
+                </div>`;
             
-            if (db[currentStage].length === 0) html += `<p style="color: #636e72;">データがありません。「＋ 枠を追加」ボタンを押して記録を始めましょう。</p>`;
+            if (db[currentStage].length === 0) html += `<p style="color: #636e72;">データがありません。下の「＋ 枠を追加」ボタンを押して記録を始めましょう。</p>`;
 
             db[currentStage].forEach(round => {
                 html += `
@@ -552,29 +615,30 @@
                     <div class="block-list">`;
                 round.blocks.forEach(b => html += generateBlockHTML(b, round.id));
                 html += `   </div>
-                    <div class="add-block-menu">
-                        <button class="add-btn primary" onclick="addBlock('${round.id}', 'text')">＋ 📝 テキスト</button>
-                        <button class="add-btn" onclick="addBlock('${round.id}', 'good')">🟢 Good</button>
-                        <button class="add-btn" onclick="addBlock('${round.id}', 'bad')">🔴 Bad</button>
-                        <button class="add-btn" onclick="addBlock('${round.id}', 'whiteboard')">🖌️ スクショ＆手書き</button>
-                    </div>
                 </div>`;
             });
 
             mainContent.innerHTML = html;
-            adjustBottomBarPosition(); // レンダリング時に位置合わせ
             setTimeout(initWhiteboards, 0);
         }
 
-        // --- レポート出力 ---
         function showSummary() {
+            if(!appData.currentId) { alert('出力するノートを選択してください。'); return; }
             currentStage = 'Summary';
-            document.querySelectorAll('.stage-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('summary-btn').classList.add('active');
-            
-            bottomBar.classList.add('hidden'); // 📝 レポート画面ではボトムバーを隠す
+            renderSidebar();
 
-            let html = `<div class="main-header"><h1>📝 全体レポート</h1></div><button class="print-btn" onclick="window.print()">📄 PDFとして保存 / 印刷</button><div class="summary-view">`;
+            const session = appData.sessions[appData.currentId];
+
+            let html = `
+                <div class="main-header">
+                    <div>
+                        <h1 style="margin:0;">📝 全体レポート</h1>
+                        <p style="margin: 5px 0 0 0; color: #636e72;">タイトル: ${session.title}</p>
+                    </div>
+                </div>
+                <button class="print-btn" onclick="window.print()">📄 PDFとして保存 / 印刷</button>
+                <div class="summary-view">`;
+            
             let hasData = false;
             
             stages.forEach(stageName => {
@@ -586,11 +650,7 @@
                     if (validBlocks.length > 0) {
                         hasStageContent = true;
                         stageHTML += `<div class="summary-container round-note">`;
-                        
-                        if (round.name.trim() !== '') {
-                            stageHTML += `<h3 style="margin-top: 0; margin-bottom: 15px; color: #2d3436;">${round.name}</h3>`;
-                        }
-                        
+                        if (round.name.trim() !== '') stageHTML += `<h3 style="margin-top: 0; margin-bottom: 15px; color: #2d3436;">${round.name}</h3>`;
                         validBlocks.forEach(b => {
                             if (b.type === 'text') stageHTML += `<div class="sum-block sum-text">${b.content}</div>`;
                             if (b.type === 'good') stageHTML += `<div class="sum-block sum-text good"><strong>🟢 Good:</strong><br>${b.content}</div>`;
@@ -611,8 +671,8 @@
         // 起動処理
         loadFromLocal();
         renderDrawerAssets(); 
-        renderSidebar();
-        renderMainArea();
+        showHome(); 
+
     </script>
 </body>
 </html>
