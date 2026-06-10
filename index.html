@@ -1383,7 +1383,9 @@
         };
 
         const CHAMPS_DATA = [
-            {jaName:'エイトロックス', kana:'えいとろっくす', img:'Aatrox', cost: 1, traits:['N.O.V.A.', 'Bastion']}, {jaName:'ブライアー', kana:'ぶらいあー', img:'Briar', cost: 1, traits:['Anima', 'Primordian', 'Rogue']}, {jaName:'ケイトリン', kana:'けいとりん', img:'Caitlyn', cost: 1, traits:['N.O.V.A.', 'Fateweaver']},
+            {jaName:'エイトロックス', kana:'えいとろっくす', img:'Aatrox', cost: 1, traits:['N.O.V.A.', 'Bastion']},
+            {jaName:'ブライアー', kana:'ぶらいあー', img:'Briar', cost: 1, traits:['Anima', 'Primordian', 'Rogue']}, 
+            {jaName:'ケイトリン', kana:'けいとりん', img:'Caitlyn', cost: 1, traits:['N.O.V.A.', 'Fateweaver'],, short:['けいと', 'ケイト']},
             {jaName:'チョ=ガス', kana:'ちょがす', img:'Chogath', cost: 1, traits:['Dark Star', 'Brawler']}, {jaName:'エズリアル', kana:'えずりある', img:'Ezreal', cost: 1, traits:['Timebreaker', 'Sniper']}, {jaName:'レオナ', kana:'れおな', img:'Leona', cost: 1, traits:['Arbiter', 'Vanguard']},
             {jaName:'リサンドラ', kana:'りさんどら', img:'Lissandra', cost: 1, traits:['Dark Star', 'Shepherd', 'Replicator']}, {jaName:'ナサス', kana:'なさす', img:'Nasus', cost: 1, traits:['Space Groove', 'Vanguard']}, {jaName:'ポッピー', kana:'ぽっぴー', img:'Poppy', cost: 1, traits:['Meeple', 'Bastion']},
             {jaName:'レク=サイ', kana:'れくさい', img:'RekSai', cost: 1, traits:['Primordian', 'Brawler']}, {jaName:'タロン', kana:'たろん', img:'Talon', cost: 1, traits:['Stargazer', 'Rogue']}, {jaName:'ティーモ', kana:'てぃーも', img:'Teemo', cost: 1, traits:['Space Groove', 'Shepherd']},
@@ -1508,6 +1510,7 @@
             assetData.champ.push({ url, cost: c.cost, name: c.jaName, traits: c.traits });
             iconDict[c.jaName] = url;
             if (c.kana) iconDict[c.kana] = url;
+            if (c.short) c.short.forEach(s => iconDict[s] = url);   // ← この1行を追加
         });
 
         ITEMS_DATA.forEach(i => {
