@@ -1184,15 +1184,19 @@
         <div class="drawer-tabs">
             <button class="drawer-tab active" onclick="switchDrawerTab('champ', this)">駒</button>
             <button class="drawer-tab" onclick="switchDrawerTab('item', this)">アイテム</button>
-            <button class="drawer-tab" onclick="switchDrawerTab('aug', this)">オーグメント</button>
         </div>
         <div id="drawer-champ" class="drawer-content active"></div>
         <div id="drawer-item" class="drawer-content"></div>
-        <div id="drawer-aug" class="drawer-content"></div>
         </div>
     </div>
 
-    <script>
+    <!-- 1ステシミュレータと共通のデータファイルを読み込む -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="data-champions.js"></script>
+    <script src="data-items.js"></script>
+
+    <!-- Babelの読み込み順序を同期させるため、type="text/babel"に変更 -->
+    <script type="text/babel">
         const defaultStages = ['プロローグ', 'Stage 1', 'Stage 2', 'Stage 3', 'Stage 4', 'Stage 5', 'Stage 6', 'Stage 7', '総括', '今日の座学'];
         let currentStage = 'Home';
         let appData = { sessions: {}, currentId: null };
@@ -1247,6 +1251,56 @@
             newDb['今日の座学'].push(createRound('学んだこと', ['text']));
 
             return newDb;
+        }
+
+        function getMetaTFTItemUrl(item) {
+            if (!item) return "";
+
+            // 引数がオブジェクトで url がある場合は、それを優先
+            if (typeof item === 'object' && item.url) {
+                return item.url;
+            }
+            // 引数がオブジェクトで imgName がある場合は、直接URLを生成して返す
+            if (typeof item === 'object' && item.imgName) {
+                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${item.imgName}.png`;
+            }
+
+            const nameInput = typeof item === 'string' ? item : item.name;
+            
+            if (!nameInput) return "";
+
+            // 1. サイオニック専用（ファイル名そのものが入っている場合）
+            if (nameInput.startsWith('tft17_item_psyops_')) {
+                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${nameInput}.png`;
+            }
+            
+            // アーティファクトとレディアントを結合して検索
+            const allSpecialItems = [...(window.ARTIFACTS || []), ...(window.RADIANT_ITEMS || [])];
+            const specialItem = allSpecialItems.find(a => a.name === nameInput || a.id === nameInput || a.imgName === nameInput || a.jaName === nameInput);
+            if (specialItem) {
+                if (specialItem.imgName) {
+                    return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${specialItem.imgName}.png`;
+                }
+                const formatted = specialItem.name.toLowerCase().replace(/['.\s]/g, '').replace('artifact', '');
+                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_item_${formatted}.png`;
+            }
+
+            // 1.5 紋章専用のURLフォーマット
+            if (nameInput.includes('Emblem')) {
+                const traitName = nameInput.replace(' Emblem', '').toLowerCase().replace(/\s+/g, '').replace(/\./g, '');
+                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft17_item_${traitName}emblemitem.png`;
+            }
+
+            // 2. 特殊消費アイテム
+            if (nameInput === 'Tiny Champion Duplicator') return "https://cdn.metatft.com/file/metatft/items/tft_consumable_championduplicator_i.png";
+            if (nameInput === 'Lesser Champion Duplicator') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_championduplicator_iii.png";
+            if (nameInput === 'Champion Duplicator') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_neekoshelp.png";
+            if (nameInput === 'Reforger') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_itemreroller.png";
+            if (nameInput === 'Magnetic Remover' || nameInput === 'itemremover') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_itemremover.png";
+
+            // 3. 通常の完成アイテム・素材（名前を整形してURL化）
+            const formatted = nameInput.toLowerCase().replace(/['.]/g, '').replace(/\s+/g, '');
+            return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_item_${formatted}.png`;
         }
 
         function saveToLocal() { localStorage.setItem('tftCoachingData_v4', JSON.stringify(appData)); }
@@ -1382,7 +1436,7 @@
             'Bulwark':[1], 'Eradicator':[1], 'Commander':[1], 'SacredDuelist':[1], 'Oracle':[1]
         };
 
-        const CHAMPS_DATA = [
+        const DEFAULT_CHAMPS_DATA = [
             {jaName:'エイトロックス', kana:'えいとろっくす', img:'Aatrox', cost: 1, traits:['N.O.V.A.', 'Bastion'],short:['えいとろ']},
             {jaName:'ブライアー', kana:'ぶらいあー', img:'Briar', cost: 1, traits:['Anima', 'Primordian', 'Rogue']}, 
             {jaName:'ケイトリン', kana:'けいとりん', img:'Caitlyn', cost: 1, traits:['N.O.V.A.', 'Fateweaver'], short:['けいと', 'ケイト']},
@@ -1452,7 +1506,7 @@
             {jaName:'ブリッツクランク', kana:'ぶりっつくらんく', img:'Blitzcrank', cost: 5, traits:['PartyTime', 'Space Groove', 'Vanguard'],short:['ぶりっつ']}
         ];
 
-        const ITEMS_DATA = [
+        const DEFAULT_ITEMS_DATA = [
             {name:'B.F. Sword', jaName:'BFソード', short:['bf', 'BF', '剣','けん'], type: 'comp'},
             {name:'Recurve Bow', jaName:'リカーブボウ', short:['弓', 'ボウ', 'bow','ゆみ'], type: 'comp'},
             {name:'Needlessly Large Rod', jaName:'ロッド', short:['ロッド', 'rod', '杖','つえ'], type: 'comp'},
@@ -1520,121 +1574,143 @@
             {name:'Psyops Emblem', jaName:'サイオニックの紋章', short:['サイオニック', 'psionic'], type: 'emblem', grantedTrait: 'Psionic'},
             {name:'rangedtrait Emblem', jaName:'スナイパーの紋章', short:['スナイパー', 'sniper'], type: 'emblem', grantedTrait: 'Sniper'},
             {name:'forceofnature', jaName:'タクティシャンの王冠', short:['王冠', 'crown', 'fon'], type: 'emblem'},
-            {name:'itemreroller', jaName:'再合成装置', short:['再合成'], type: 'emblem', isConsumable: true},
-            {name:'itemremover', jaName:'磁力式除去装置', short:['除去装置', '解除'], type: 'emblem', isConsumable: true},
-            {name:'championduplicator_iii', jaName:'小型チャンピオン複製機', short:['小型複製機','ちびにーこ'], type: 'emblem', isConsumable: true},
-            {name:'neekoshelp', jaName:'チャンピオン複製機', short:['複製機', 'ニーコ','でかにーこ'], type: 'emblem', isConsumable: true}
+
+            // アーティファクト
+            {id: 'ahris_aura', name: "Ahri's Aura", jaName: 'アーリのオーラ', type: 'artifact', imgName: 'tft17_item_artifact_ahriartifact', short:['アーリオーラ','あーりのおーら']},
+            {id: 'evelynns_intuition', name: "Evelynn's Intuition", jaName: 'イブリンの直感', type: 'artifact', imgName: 'tft17_item_artifact_evelynnartifact', short:['いぶりんのちょっかん']},
+            {id: 'trinityforce', name: 'Trinity Force', jaName: 'インフィニティ フォース', type: 'artifact', imgName: 'tft4_item_ornninfinityforce', short:['インフィニティフォース','みつまた']},
+            {id: 'varuss_tenacity', name: "Varus's Tenacity", jaName: 'ヴァルスの執念', type: 'artifact', imgName: 'tft17_item_artifact_varusartifact', short:['ゔぁるすのしゅうねん']},
+            {id: 'witsend', name: "Wit's End", jaName: 'ウィッツ エンド', type: 'artifact', imgName: 'tft_item_artifact_witsend', short:['ウィッツエンド','うぃっつえんど']},
+            {id: 'voidgauntlet', name: 'Void Gauntlet', jaName: 'ヴォイド ガントレット', type: 'artifact', imgName: 'tft_item_artifact_voidgauntlet', short:['ヴォイドガントレット']},
+            {id: 'ekkos_patience', name: "Ekko's Patience", jaName: 'エコーの忍耐', type: 'artifact', imgName: 'tft17_item_artifact_ekkoartifact', short:['えこーのにんたい']},
+            {id: 'gamblersblade', name: "Gambler's Blade", jaName: 'ギャンブラーの剣', type: 'artifact', imgName: 'tft7_item_shimmerscalegamblersblade', short:['ぎゃんぶらー','ぎゃんけん']},
+            {id: 'goldcollector', name: 'The Collector', jaName: 'ゴールド コレクター', type: 'artifact', imgName: 'tft4_item_ornnthecollector', short:['ゴールドコレクター','コレクター','金コレ','ごるこれ']},
+            {id: 'seekersarmguard', name: "Seeker's Armguard", jaName: 'シーカー アームガード', type: 'artifact', imgName: 'tft_item_artifact_seekersarmguard', short:['シーカーアームガード','しーかー','あむが']},
+            {id: 'silvermeredawn', name: 'Silvermere Dawn', jaName: 'シルバーミアの夜明け', type: 'artifact', imgName: 'tft_item_artifact_silvermeredawn', short:['しるばーみあ']},
+            {id: 'statikkshiv_artifact', name: 'Statikk Shiv Artifact', jaName: 'スタティック シヴ', type: 'artifact', imgName: 'tft_item_artifact_statikkshiv', short:['スタティックシヴ','赤シヴ']},
+            {id: 'snipersfocus', name: "Sniper's Focus", jaName: 'スナイパー フォーカス', type: 'artifact', imgName: 'tft9_item_ornnhorizonfocus', short:['スナイパーフォーカス','すなふぉ']},
+            {id: 'threshs_lantern', name: "Thresh's Lantern", jaName: 'スレッシュのランタン', type: 'artifact', imgName: 'tft17_item_artifact_threshlantern', short:['すれっしゅのらんたん','らんたん']},
+            {id: 'zhonyasparadox', name: "Zhonya's Paradox", jaName: 'ゾーニャの砂時計', type: 'artifact', imgName: 'tft4_item_ornnzhonyasparadox', short:['ゾーニャ','ぞーにゃ','ぞにゃ']},
+            {id: 'sorakas_miracle', name: "Soraka's Miracle", jaName: 'ソラカの奇跡', type: 'artifact', imgName: 'tft17_item_artifact_sorakaartifact', short:['そらかのきせき']},
+            {id: 'titanichydra', name: 'Titanic Hydra', jaName: 'タイタン ハイドラ', type: 'artifact', imgName: 'tft_item_artifact_titanichydra', short:['タイタンハイドラ']},
+            {id: 'deathsdefiance', name: "Death's Defiance", jaName: 'デス ディファイアンス', type: 'artifact', imgName: 'tft4_item_ornndeathsdefiance', short:['デスディファイアンス','ですでぃふぁいあんす']},
+            {id: 'dawncore', name: 'Dawncore', jaName: 'ドーンコア', type: 'artifact', imgName: 'tft_item_artifact_dawncore', short:['どーんこあ']},
+            {id: 'hullcrusher', name: 'Hullcrusher', jaName: 'ハルクラッシャー', type: 'artifact', imgName: 'tft9_item_ornnhullbreaker', short:['ハルクラ','はるくら','はるくらっしゃー']},
+            {id: 'fishbones', name: 'Fishbones', jaName: 'フィッシュボーン', type: 'artifact', imgName: 'tft_item_artifact_fishbones', short:['ふぃっしゅぼーん']},
+            {id: 'flickerblade', name: 'Flickerblade', jaName: 'フリッカーブレード', type: 'artifact', imgName: 'tft_item_artifact_navoriflickerblades', short:['ふりっかー']},
+            {id: 'prowlersclaw', name: "Prowler's Claw", jaName: 'プローラー クロウ', type: 'artifact', imgName: 'tft_item_artifact_prowlersclaw', short:['プローラークロウ','ぷろーらー']},
+            {id: 'mittens', name: 'Mittens', jaName: 'ミトン', type: 'artifact', imgName: 'tft_item_artifact_mittens', short:['みとん']},
+            {id: 'mogulsmail', name: "Mogul's Mail", jaName: 'モーグル メイル', type: 'artifact', imgName: 'tft7_item_shimmerscalemogulsmail', short:['モーグルメイル','もーぐる']},
+            {id: 'yasuos_bladework', name: "Yasuo's Bladework", jaName: 'ヤスオのブレードワーク', type: 'artifact', imgName: 'tft17_item_artifact_yasuoartifact', short:['やすおのぶれーどわーく']},
+            {id: 'lightshieldcrest', name: 'Lightshield Crest', jaName: 'ライトシールドのクレスト', type: 'artifact', imgName: 'tft_item_artifact_lightshieldcrest', short:['らいとしーるど']},
+            {id: 'rapidfirecannon_artifact', name: 'Rapid Firecannon Artifact', jaName: 'ラピッド ファイアキャノン', type: 'artifact', imgName: 'tft_item_artifact_rapidfirecannon', short:['ラピッドファイアキャノン','rfc','RFC','らぴふぁ']},
+            {id: 'lichbane', name: 'Lich Bane', jaName: 'リッチ ベイン', type: 'artifact', imgName: 'tft_item_artifact_lichbane', short:['リッチベイン','りっちべいん']},
+            {id: 'ludenstempest', name: "Luden's Tempest", jaName: 'ルーデン テンペスト', type: 'artifact', imgName: 'tft_item_artifact_ludenstempest', short:['ルーデンテンペスト','るーでん']},
+            {id: 'unendingdespair', name: 'Unending Despair', jaName: '不屈', type: 'artifact', imgName: 'tft_item_artifact_unendingdespair', short:['ふくつ']},
+            {id: 'everlastingpact', name: 'Everlasting Pact', jaName: '不滅の協定', type: 'artifact', imgName: 'tft_item_artifact_eternalpact', short:['ふめつのきょうてい','ふめつ']},
+            {id: 'dusksblessing', name: "Dusk's Blessing", jaName: '夕闇の加護', type: 'artifact', imgName: 'tft_item_artifact_aegisofdusk', short:['ゆうやみ']},
+            {id: 'dawnsblessing', name: "Dawn's Blessing", jaName: '夜明けの加護', type: 'artifact', imgName: 'tft_item_artifact_aegisofdawn', short:['よあけ']},
+            {id: 'hatjuice', name: 'Hat Juice', jaName: '帽子ジュース', type: 'artifact', imgName: 'tft_item_artifact_cappajuice', short:['ぼうしじゅーす','帽子汁']},
+            {id: 'blightingjewel', name: 'Blighting Jewel', jaName: '枯死の宝石', type: 'artifact', imgName: 'tft_item_artifact_blightingjewel', short:['こしのほうせき','こし']},
+            {id: 'hellfirehatchet', name: 'Hellfire Hatchet', jaName: '獄炎のハチェット', type: 'artifact', imgName: 'tft_item_artifact_hellfirehatchet', short:['ごくえん','はちぇっと']},
+            {id: 'talismanofascension', name: 'Talisman of Ascension', jaName: '超越のタリスマン', type: 'artifact', imgName: 'tft_item_artifact_talismanofascension', short:['タリスマン','ちょうえつ','きんたま']},
+            {id: 'crown_of_demacia', name: 'Crown of Demacia', jaName: 'デマーシアの王冠', type: 'artifact', imgName: 'tft9_item_crownofdemacia', short:['でまーしあ','王冠','おうかん']},
+            // レディアントアイテム
+            {id: 'r_deathblade', name: 'Luminous Deathblade', jaName: 'レディアント デスブレード', type: 'radiant', imgName: 'tft5_item_deathbladeradiant', short:['レディデスブレ','光デスブレ']},
+            {id: 'r_giantslayer', name: 'Demonslayer', jaName: 'レディアント ジャイアントスレイヤー', type: 'radiant', imgName: 'tft5_item_giantslayerradiant', short:['レディジャイスレ','光ジャイスレ']},
+            {id: 'r_gunblade', name: 'Hextech Lifeblade', jaName: 'レディアント ヘクステックガンブレード', type: 'radiant', imgName: 'tft5_item_hextechgunbladeradiant', short:['レディガンブレ','光ガンブレ']},
+            {id: 'r_shojin', name: 'Spear of Hirana', jaName: 'レディアント ショウジンの矛', type: 'radiant', imgName: 'tft5_item_spearofshojinradiant', short:['レディショウジン','光ショウジン']},
+            {id: 'r_edgeofnight', name: 'Brink of Dawn', jaName: 'レディアント ナイトエッジ', type: 'radiant', imgName: 'tft5_item_guardianangelradiant', short:['レディナイトエッジ','光ナイトエッジ']},
+            {id: 'r_bloodthirster', name: 'Blessed Bloodthirster', jaName: 'レディアント ブラッドサースター', type: 'radiant', imgName: 'tft5_item_bloodthirsterradiant', short:['レディブラサス','光ブラサス','光血剣']},
+            {id: 'r_steraksgage', name: "Sterak's Megashield", jaName: 'レディアント ステラックの篭手', type: 'radiant', imgName: 'tft5_item_steraksgageradiant', short:['レディステラック','光ステラック']},
+            {id: 'r_infinityedge', name: 'Zenith Edge', jaName: 'レディアント インフィニティエッジ', type: 'radiant', imgName: 'tft5_item_infinityedgeradiant', short:['レディIE','光IE']},
+            {id: 'r_rapidfirecannon', name: 'Crest of Cinders', jaName: 'レディアント レッドバフ', type: 'radiant', imgName: 'tft5_item_rapidfirecannonradiant', short:['レディ赤バフ','光赤バフ','光レッドバフ']},
+            {id: 'r_guinsoo', name: "Guinsoo's Reckoning", jaName: 'レディアント グインソー レイジブレード', type: 'radiant', imgName: 'tft5_item_guinsoosragebladeradiant', short:['レディグインソー','光グインソー']},
+            {id: 'r_statikk', name: "Statikk's Favor", jaName: 'レディアント ヴォイドスタッフ', type: 'radiant', imgName: 'tft5_item_statikkshivradiant', short:['レディボイスタ','光ボイスタ']},
+            {id: 'r_titans', name: "Titan's Vow", jaName: 'レディアント 巨人の誓い', type: 'radiant', imgName: 'tft5_item_titansresolveradiant', short:['レディタイタン','光タイタン']},
+            {id: 'r_runaan', name: "Runaan's Tempest", jaName: 'レディアント クラーケンの怒り', type: 'radiant', imgName: 'tft5_item_runaanshurricaneradiant', short:['レディクラーケン','光クラーケン']},
+            {id: 'r_nashor', name: "Baron's Gift", jaName: 'レディアント ナッシャー トゥース', type: 'radiant', imgName: 'tft5_item_leviathanradiant', short:['レディナッシャー','光ナッシャー']},
+            {id: 'r_lastwhisper', name: 'Eternal Whisper', jaName: 'レディアント ラストウィスパー', type: 'radiant', imgName: 'tft5_item_lastwhisperradiant', short:['レディLW','光LW','光ラスウィス']},
+            {id: 'r_rabadon', name: "Rabadon's Ascended Deathcap", jaName: 'レディアント ラバドンデスキャップ', type: 'radiant', imgName: 'tft5_item_rabadonsdeathcapradiant', short:['レディラバドン','光ラバドン','光帽子']},
+            {id: 'r_archangel', name: "Urf-Angel's Staff", jaName: 'レディアント アークエンジェルスタッフ', type: 'radiant', imgName: 'tft5_item_archangelsstaffradiant', short:['レディエンジェル','光アクエン']},
+            {id: 'r_crownguard', name: 'Royal Crownshield', jaName: 'レディアント クラウンガード', type: 'radiant', imgName: 'tft5_item_crownguardradiant', short:['レディクラウン','光クラガ']},
+            {id: 'r_ionic', name: 'Covalent Spark', jaName: 'レディアント アイオニックスパーク', type: 'radiant', imgName: 'tft5_item_ionicsparkradiant', short:['レディアイオニック','光アイオニック','光アイスパ']},
+            {id: 'r_morello', name: 'More More-ellonomicon', jaName: 'レディアント モレロノミコン', type: 'radiant', imgName: 'tft5_item_morellonomiconradiant', short:['レディモレロ','光モレロ']},
+            {id: 'r_jeweled', name: 'Glamorous Gauntlet', jaName: 'レディアント ジュエル ガントレット', type: 'radiant', imgName: 'tft5_item_jeweledgauntletradiant', short:['レディJG','光JG','光ジュエル']},
+            {id: 'r_bluebuff', name: 'Blue Blessing', jaName: 'レディアント ブルーバフ', type: 'radiant', imgName: 'tft5_item_bluebuffradiant', short:['レディ青バフ','光青バフ']},
+            {id: 'r_vow', name: "Bulwark's Oath", jaName: 'レディアント プロテクターの誓い', type: 'radiant', imgName: 'tft5_item_frozenheartradiant', short:['レディプロテクター','光プロテクター']},
+            {id: 'r_adaptive', name: 'Jaksho the Protean', jaName: 'レディアント アダプティブヘルム', type: 'radiant', imgName: 'tft5_item_adaptivehelmradiant', short:['レディアダプティブ','光アダプティブ']},
+            {id: 'r_redemption', name: 'Absolution', jaName: 'レディアント スピリット ビサージュ', type: 'radiant', imgName: 'tft5_item_redemptionradiant', short:['レディビサージュ','光ビサージュ']},
+            {id: 'r_hoj', name: 'Fist of Fairness', jaName: 'レディアント ハンド オブ ジャスティス', type: 'radiant', imgName: 'tft5_item_handofjusticeradiant', short:['レディHOJ','光HOJ','光はんじゃ']},
+            {id: 'r_bramble', name: 'Rosethorn Vest', jaName: 'レディアント ブランブルベスト', type: 'radiant', imgName: 'tft5_item_bramblevestradiant', short:['レディブランブル','光ブランブル']},
+            {id: 'r_gargoyle', name: 'Dvarapala Stoneplate', jaName: 'レディアント ガーゴイルストーンプレート', type: 'radiant', imgName: 'tft5_item_gargoylestoneplateradiant', short:['レディガーゴイル','光ガーゴイル','光石像']},
+            {id: 'r_sunfire', name: 'Sunlight Cape', jaName: 'レディアント サンファイアケープ', type: 'radiant', imgName: 'tft5_item_sunfirecaperadiant', short:['レディサンファイア','光サンファイア','光サンファ']},
+            {id: 'r_steadfast', name: 'Legacy of the Colossus', jaName: 'レディアント 揺るがぬ心', type: 'radiant', imgName: 'tft5_item_nightharvesterradiant', short:['レディ揺るがぬ','光揺るがぬ','光ゆるここ']},
+            {id: 'r_dragon', name: "Dragon's Will", jaName: 'レディアント ドラゴン クロウ', type: 'radiant', imgName: 'tft5_item_dragonsclawradiant', short:['レディドラクロ','光ドラクロ']},
+            {id: 'r_evenshroud', name: 'Equinox', jaName: 'レディアント イーブンシュラウド', type: 'radiant', imgName: 'tft5_item_spectralgauntletradiant', short:['レディイーブン','光イーブン']},
+            {id: 'r_quicksilver', name: 'Quickestsilver', jaName: 'レディアント クイックシルバー', type: 'radiant', imgName: 'tft5_item_quicksilverradiant', short:['レディQSS','光QSS','光サッシュ']},
+            {id: 'r_warmog', name: "Warmog's Pride", jaName: 'レディアント ワーモグ アーマー', type: 'radiant', imgName: 'tft5_item_warmogsarmorradiant', short:['レディワーモグ','光ワーモグ']},
+            {id: 'r_guardbreaker', name: 'Willbreaker', jaName: 'レディアント ストライカー フレイル', type: 'radiant', imgName: 'tft5_item_trapclawradiant', short:['レディストライカー','光ストライカー']},
+            {id: 'r_thiefs', name: "Rascal's Gloves", jaName: 'レディアント 盗賊のグローブ', type: 'radiant', imgName: 'tft5_item_thiefsglovesradiant', short:['レディ盗賊','光盗賊']},
         ];
 
-        const assetData = { champ: [], item: [], aug: [] };
+        const assetData = { champ: [], item: [] };
         const iconDict = {};
 
-        CHAMPS_DATA.forEach(c => {
-            const url = `https://blitz-cdn.blitz.gg/blitz/tft/champion_squares/set17/TFT17_${c.img.charAt(0).toUpperCase() + c.img.slice(1)}.webp`;
-            assetData.champ.push({ url, cost: c.cost, name: c.jaName, traits: c.traits });
-            iconDict[c.jaName] = url;
+        // 外部ファイル (data-*.js) で定義された変数が存在すればそちらを優先して使用します
+        const activeChamps = window.CHAMPS || window.CHAMPS_DATA || window.championsData || window.champions || DEFAULT_CHAMPS_DATA;
+
+        let activeItems = [];
+        if (window.ITEMS && window.ITEM_RECIPES) {
+            // data-items.js が読み込まれている場合、分割されている全アイテムデータを統合
+            const getJa = (id) => (window.ITEM_JA && window.ITEM_JA[id]) ? window.ITEM_JA[id] : id;
+            const comps = window.ITEMS.map(i => ({...i, type: 'comp'}));
+            const recipes = Object.values(window.ITEM_RECIPES).map(i => ({
+                ...i, 
+                type: (i.grantedTrait || i.id === 'tacticians_crown') ? 'emblem' : 'completed'
+            }));
+            const cons = Object.values(window.CONSUMABLES || {}).map(i => ({...i, type: 'emblem', isConsumable: true}));
+            const arts = (window.ARTIFACTS || []).map(i => ({...i, type: 'artifact'}));
+            const rads = (window.RADIANT_ITEMS || []).map(i => ({...i, type: 'radiant'}));
+
+            activeItems = [...comps, ...recipes, ...cons, ...arts, ...rads].map(i => ({
+                ...i, name: i.name || i.id, jaName: i.jaName || getJa(i.id || i.name), short: i.short || []
+            }));
+        } else {
+            activeItems = window.ITEMS_DATA || window.itemsData || window.items || DEFAULT_ITEMS_DATA;
+        }
+
+        activeChamps.forEach(c => {
+            if (!c.img) return;
+            const url = `https://cdn.metatft.com/file/metatft/champions/tft17_${c.img.toLowerCase()}.png`;
+            assetData.champ.push({ url, cost: c.cost, name: c.jaName || c.name, traits: c.traits });
+            if (c.jaName) iconDict[c.jaName] = url;
             if (c.kana) iconDict[c.kana] = url;
-            if (c.short) c.short.forEach(s => iconDict[s] = url);   // ← この1行を追加
+            if (c.short) c.short.forEach(s => iconDict[s] = url);
         });
 
-        ITEMS_DATA.forEach(i => {
-            let url;
-            if (i.name.includes('Emblem')) {
-                const traitName = i.name.replace(' Emblem', '').toLowerCase().replace(/\s+/g, '').replace(/\./g, '');
-                url = `https://cdn.metatft.com/file/metatft/items/tft17_item_${traitName}emblemitem.png`;
-            } else if (i.isConsumable) {
-                url = `https://cdn.metatft.com/file/metatft/items/tft_consumable_${i.name}.png`;
-            } else {
-                const formattedName = i.name.toLowerCase().replace(/['.]/g, '').replace(/\s+/g, '');
-                url = `https://cdn.metatft.com/file/metatft/items/tft_item_${formattedName}.png?v=1`;
+        activeItems.forEach(i => {
+            const url = getMetaTFTItemUrl(i);
+            assetData.item.push({ url, type: i.type, name: i.jaName || i.name, grantedTrait: i.grantedTrait });
+            
+            if (i.jaName) {
+                iconDict[i.jaName] = url;
+                
+                // スペースや中点を除いた名前も登録（例：「インフィニティ フォース」→「インフィニティフォース」）
+                const noSpace = i.jaName.replace(/[\s・=]/g, '');
+                if (noSpace !== i.jaName) iconDict[noSpace] = url;
+                
+                // レディアント特有の自動略称
+                if (i.jaName.startsWith('レディアント')) {
+                    const base = i.jaName.replace('レディアント', '').replace(/[\s・=]/g, '');
+                    if (base) {
+                        iconDict['レディ' + base] = url;
+                        iconDict['光' + base] = url;
+                        iconDict['れでぃ' + base] = url;
+                    }
+                }
             }
-            assetData.item.push({ url, type: i.type, name: i.jaName, grantedTrait: i.grantedTrait });
-            iconDict[i.jaName] = url;
-            i.short.forEach(s => iconDict[s] = url);
-        });
-
-        const AUGMENTS_DATA = [
-            // シルバー
-            { imgName: 'afk-i', tier: 'silver', name: 'AFK' },
-            { imgName: 'silver-spoon-i', tier: 'silver', name: '銀の匙' },
-            { imgName: 'cognitivetax_i', tier: 'silver', name: 'コグニティブ タックス' },
-            { imgName: 'powerup_i', tier: 'silver', name: 'オーグメントパワー' },
-            { imgName: 'threes-company-i', tier: 'silver', name: 'ワンツースリー' },
-            { imgName: 'bandthieves1', tier: 'silver', name: '盗賊団' },
-            { imgName: 'itemgrabbag1', tier: 'silver', name: 'アイテム福袋' },
-            { imgName: 'hyperbolicrodextender_i', tier: 'silver', name: '連続魔法' },
-            { imgName: 'carveapath_i', tier: 'silver', name: '道を切り拓け' },
-            { imgName: 'extrabuckles_i', tier: 'silver', name: '追加のバックル' },
-            { imgName: 'makeshift1', tier: 'silver', name: '即席アーマー I' },
-            { imgName: 'expedition_i', tier: 'silver', name: 'エクスペディション' },
-            { imgName: 'thetower_i', tier: 'silver', name: 'ザ・タワー' },
-            { imgName: 'tiny-titans-i', tier: 'silver', name: '小さな巨人' },
-            { imgName: 'building-an-army-i', tier: 'silver', name: 'チーム構築' },
-            { imgName: 'branching-out-i', tier: 'silver', name: '構成拡大' },
-            { imgName: 'kickstart_i', tier: 'silver', name: 'キックスタート' },
-            { imgName: 'firesale_i', tier: 'silver', name: 'ファイアセール' },
-            { imgName: 'slice_of_life_i', tier: 'silver', name: '普通の日々' },
-            { imgName: 'good-for-something-i', tier: 'silver', name: '有効活用 I' },
-            { imgName: 'recurvewrecker_i', tier: 'silver', name: '援護の弓' },
-            { imgName: 'craftedcrafting_i', tier: 'silver', name: '巧みなクラフト' },
-            // ゴールド
-            { imgName: 'legionofthrees_ii', tier: 'gold', name: '3の軍団' },
-            { imgName: 'epoch_ii', tier: 'gold', name: 'エポック' },
-            { imgName: 'trade2', tier: 'gold', name: 'トレードセクター' },
-            { imgName: 'savingsaccount_ii', tier: 'gold', name: '普通預金口座' },
-            { imgName: 'slammin_ii', tier: 'gold', name: '叩きつけ' },
-            { imgName: 'calculatedloss2', tier: 'gold', name: '戦略的敗北' },
-            { imgName: 'pandora2', tier: 'gold', name: 'パンドラのアイテム II' },
-            { imgName: 'prizefighter_ii', tier: 'gold', name: 'プロボクサー' },
-            { imgName: 'feedtheflames_ii', tier: 'gold', name: '炎を強めて' },
-            { imgName: 'seraphimsstaff_ii', tier: 'gold', name: 'セラフィムの杖' },
-            { imgName: 'spiritofredemption_ii', tier: 'gold', name: 'リデンプションの魂' },
-            { imgName: 'warpath_ii', tier: 'gold', name: '出陣' },
-            { imgName: 'makeshift2', tier: 'gold', name: '即席アーマー II' },
-            { imgName: 'bodyguardstraining_ii', tier: 'gold', name: 'ボディーガードの訓練' },
-            { imgName: 'unforgotten_ii', tier: 'gold', name: 'ウォーロードの名誉' },
-            { imgName: 'infinityprotection_ii', tier: 'gold', name: 'インフィニティの守護' },
-            { imgName: 'animacommander_ii', tier: 'gold', name: 'アニマ司令官' },
-            { imgName: 'ultrarapidfire_ii', tier: 'gold', name: 'U.R.F.' },
-            { imgName: 'backlineblueprint_ii', tier: 'gold', name: '後衛の設計図' },
-            { imgName: 'frontlinefoundation_ii', tier: 'gold', name: '前衛の礎' },
-            { imgName: 'spreadingroots_ii', tier: 'gold', name: '広がる根' },
-            { imgName: 'earlylearning_ii', tier: 'gold', name: '早期教育' },
-            { imgName: 'noscoutnopivot_ii', tier: 'gold', name: '偵察なし、変更なし' },
-            { imgName: 'twomuchvalue_ii', tier: 'gold', name: 'お得な2' },
-            { imgName: 'advancedloan_ii', tier: 'gold', name: '前借り' },
-            { imgName: 'dizzy-ii', tier: 'gold', name: '乱れる思考' },
-            { imgName: 'salvage2', tier: 'gold', name: '回収箱' },
-            { imgName: 'two-tanky-ii', tier: 'gold', name: '2体のタンク' },
-            { imgName: 'birthdayreunion_ii', tier: 'gold', name: 'バースデー リユニオン' },
-            { imgName: 'earning-from-experience-ii', tier: 'gold', name: '研究熱心' },
-            { imgName: 'sunfireboard2', tier: 'gold', name: 'サンファイア ボード' },
-            { imgName: 'hyperroll2', tier: 'gold', name: 'ハスラー' },
-            // プリズマティック
-            { imgName: 'upwardmobility_iii', tier: 'prismatic', name: '上方移動' },
-            { imgName: 'richgetricher3', tier: 'prismatic', name: 'ヘッジファンド' },
-            { imgName: 'goldenticket3', tier: 'prismatic', name: 'プリズムチケット' },
-            { imgName: 'atwhatcost_iii', tier: 'prismatic', name: '代償' },
-            { imgName: 'constructacompanion_iii', tier: 'prismatic', name: '仲間を作ろう' },
-            { imgName: 'levelup3', tier: 'prismatic', name: 'レベルアップ！' },
-            { imgName: 'bandthieves3', tier: 'prismatic', name: '盗賊団 II' },
-            { imgName: 'https://tftips.b-cdn.net/aug/_deadliercaps.avif?v=1', tier: 'prismatic', name: 'もっと怖いキャップ' },
-            { imgName: 'exaltedadventure_iii', tier: 'prismatic', name: '崇高の冒険' },
-            { imgName: 'https://tftips.b-cdn.net/aug/_tragicalblade.avif?v=1', tier: 'prismatic', name: 'デッドリアー ブレード' },
-            { imgName: 'cursedcrown-iii', tier: 'prismatic', name: 'カースドのクラウン' },
-            { imgName: 'comebackstory_iii', tier: 'prismatic', name: '逆転劇' },
-            { imgName: 'worththewait_iii', tier: 'prismatic', name: '待つ価値あり II' },
-            { imgName: 'golden-gifts-iii', tier: 'prismatic', name: 'バースデープレゼント' },
-            { imgName: 'tacticianskitchen_iii', tier: 'prismatic', name: 'タクティシャンの台所' },
-            { imgName: 'thetraittree_iii', tier: 'prismatic', name: '特性の木' },
-            { imgName: 'buried-treasures-iii', tier: 'prismatic', name: '埋もれた宝物' }
-        ];
-
-        AUGMENTS_DATA.forEach(a => {
-            const url = a.imgName.startsWith('http') 
-                ? a.imgName 
-                : `https://cdn.metatft.com/file/metatft/augments/${a.imgName}.png`;
-            assetData.aug.push({ url, tier: a.tier, name: a.name });
+            if (i.short) i.short.forEach(s => iconDict[s] = url);
         });
 
         let isComposing = false;
@@ -1691,25 +1767,22 @@
             }).join('');
             document.getElementById('drawer-champ').innerHTML = champHtml;
 
-            const itemTypes = [{key: 'comp', label: '素材アイテム'}, {key: 'completed', label: '完成アイテム'}, {key: 'emblem', label: '紋章・その他'}];
+            const itemTypes = [
+                {key: 'comp', label: '素材アイテム'}, 
+                {key: 'completed', label: '完成アイテム'}, 
+                {key: 'artifact', label: 'アーティファクト'},
+                {key: 'radiant', label: 'レディアント'},
+                {key: 'support', label: 'サポートアイテム'},
+                {key: 'emblem', label: '紋章・その他'}
+            ];
             const itemHtml = itemTypes.map(t => {
                 const items = assetData.item.filter(i => i.type === t.key);
                 if (items.length === 0) return '';
-                return `<div class="drawer-section-title">${t.label}</div><div class="drawer-grid">` +
+                return `<div class="drawer-section-title">${t.label} (${items.length})</div><div class="drawer-grid">` +
                     items.map(i => `<img src="${i.url}" class="asset-icon" title="${i.name}" draggable="true" ondragstart="handleDragStart(event, '${i.url}', '${i.name || ''}')" alt="asset">`).join('') +
                     `</div>`;
             }).join('');
             document.getElementById('drawer-item').innerHTML = itemHtml;
-
-            const augTiers = [{key: 'silver', label: 'シルバー'}, {key: 'gold', label: 'ゴールド'}, {key: 'prismatic', label: 'プリズマティック'}];
-            const augHtml = augTiers.map(t => {
-                const augs = assetData.aug.filter(a => a.tier === t.key);
-                if (augs.length === 0) return '';
-                return `<div class="drawer-section-title">${t.label}</div><div class="drawer-grid">` +
-                    augs.map(a => `<img src="${a.url}" class="asset-icon" data-tier="${a.tier}" title="${a.name}" draggable="true" ondragstart="handleDragStart(event, '${a.url}', '${a.name || ''}')" alt="asset">`).join('') +
-                    `</div>`;
-            }).join('');
-            document.getElementById('drawer-aug').innerHTML = augHtml;
         }
 
         function handleDragStart(e, url, name) {
@@ -1853,7 +1926,7 @@
         }
 
         function findNameByUrl(url) {
-            const allAssets = [...assetData.champ, ...assetData.item, ...assetData.aug];
+            const allAssets = [...assetData.champ, ...assetData.item];
             const asset = allAssets.find(a => a.url === url);
             return asset ? asset.name : 'Unknown';
         }
@@ -1861,7 +1934,6 @@
         function getAssetType(url) {
             if (assetData.champ.some(c => c.url === url)) return 'champ';
             if (assetData.item.some(i => i.url === url)) return 'item';
-            if (assetData.aug.some(a => a.url === url)) return 'aug';
             return 'unknown';
         }
 
