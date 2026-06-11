@@ -795,9 +795,16 @@
             color: var(--ink-xlight);
             background: var(--surface-2);
             font-size: 13px;
+            transition: all 0.15s;
+        }
+        .image-upload-area:focus {
+            border-color: var(--gold);
+            background: var(--surface);
+            outline: none;
         }
 
-        .image-preview { display: flex; justify-content: center; }
+        .image-preview { display: flex; justify-content: center; outline: none; border-radius: var(--radius-sm); }
+        .image-preview:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
         .image-preview img { max-width: 100%; max-height: 300px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
         /* ── WHITEBOARD ── */
@@ -2386,6 +2393,37 @@
             }
         }
 
+        function handleImagePaste(e, roundId, blockId) {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (!clipboardData || !clipboardData.items) return;
+            const items = clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image/') === 0) {
+                    const file = items[i].getAsFile();
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(evt) { updateBlockContent(roundId, blockId, evt.target.result); renderMainArea(); }
+                        reader.readAsDataURL(file);
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+        }
+
+        function handleImageDrop(e, roundId, blockId) {
+            e.preventDefault();
+            e.currentTarget.style.borderColor = '';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                if (file.type.indexOf('image/') === 0) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) { updateBlockContent(roundId, blockId, evt.target.result); renderMainArea(); }
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
         let canvases = {};
         const wbColors = ['#1C2333', '#C0392B', '#185FA5', '#1A8A5A', '#E0A020', '#E17055', '#6c5ce7', '#fd79a8', '#00cec9', '#A8B3CC'];
 
@@ -2494,8 +2532,8 @@
                     ondrop="setTimeout(()=>updateBlockContent('${roundId}', '${blockId}', this.innerHTML), 100)">${block.content || ''}</div>`;
             } else if (block.type === 'image') {
                 contentHTML = block.content
-                    ? `<div class="image-preview"><img src="${block.content}" alt="Image"></div><div style="margin-top:10px;text-align:center;"><input type="file" accept="image/*" onchange="handleImageUpload(event, '${roundId}', '${blockId}')"></div>`
-                    : `<div class="image-upload-area"><input type="file" accept="image/*" onchange="handleImageUpload(event, '${roundId}', '${blockId}')"><p style="margin-top:8px;">画像を選択してください</p></div>`;
+                    ? `<div class="image-preview" tabindex="0" onpaste="handleImagePaste(event, '${roundId}', '${blockId}')" ondragover="event.preventDefault();" ondrop="handleImageDrop(event, '${roundId}', '${blockId}')"><img src="${block.content}" alt="Image" title="クリックしてフォーカスし、Ctrl+Vで画像を置換できます"></div><div style="margin-top:10px;text-align:center;"><input type="file" accept="image/*" onchange="handleImageUpload(event, '${roundId}', '${blockId}')"></div>`
+                    : `<div class="image-upload-area" tabindex="0" onpaste="handleImagePaste(event, '${roundId}', '${blockId}')" ondragover="event.preventDefault(); this.style.borderColor='var(--gold)';" ondragleave="this.style.borderColor='';" ondrop="handleImageDrop(event, '${roundId}', '${blockId}')"><input type="file" accept="image/*" onchange="handleImageUpload(event, '${roundId}', '${blockId}')"><p style="margin-top:8px;">画像を選択するか、ドラッグ＆ドロップ、<br>またはここをクリックして貼り付け (Ctrl+V)</p></div>`;
             } else if (block.type === 'whiteboard') {
                 let colorBtns = wbColors.map(color => `<button class="wb-color-btn color-btn-${block.id}" data-color="${color}" style="background:${color};" onclick="setWbColor('${block.id}', '${color}')"></button>`).join('');
                 contentHTML = `<div class="wb-toolbar-wrapper">
