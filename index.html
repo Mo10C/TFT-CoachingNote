@@ -392,7 +392,7 @@
         .session-card {
             background: var(--surface);
             border-radius: var(--radius-lg);
-            padding: 20px;
+            padding: 16px;
             border: 1px solid var(--border);
             cursor: pointer;
             transition: all 0.15s;
@@ -414,6 +414,30 @@
             background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 100%);
             opacity: 0;
             transition: opacity 0.15s;
+        }
+
+        .session-card-thumb {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: var(--surface-3);
+            background-size: cover;
+            background-position: center;
+            border-radius: var(--radius-md);
+            margin-bottom: 4px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .session-card-thumb.empty::after {
+            content: 'TFT NOTES';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--border-strong);
+            letter-spacing: 1px;
         }
 
         .session-card:hover {
@@ -1203,6 +1227,33 @@
         let db = {};
 
         const genId = () => 'id_' + Date.now() + Math.random().toString(36).substr(2, 9);
+        
+        function extractYoutubeId(url) {
+            if (!url) return null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function getYoutubeThumbnailUrl(videoId) {
+            return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        }
+
+        function getYoutubeThumbnailFromSession(session) {
+            if (!session || !session.data) return null;
+            for (const stageName in session.data) {
+                for (const round of session.data[stageName]) {
+                    for (const block of round.blocks) {
+                        if (block.type === 'youtube' && block.content) {
+                            const videoId = extractYoutubeId(block.content);
+                            if (videoId) return getYoutubeThumbnailUrl(videoId);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         function createBlock(type) { 
             let content = null;
             if (type === 'tier') {
@@ -1214,6 +1265,10 @@
                 ]);
             } else if (type === 'board') {
                 content = JSON.stringify(Array(28).fill(null));
+            } else if (type === 'youtube') {
+                content = '';
+            } else if (type === 'link') {
+                content = '';
             } else if (type === 'flowchart') {
                 content = JSON.stringify({ nodes: [], edges: [] });
             }
@@ -1231,7 +1286,7 @@
             let newDb = {};
             defaultStages.forEach(s => newDb[s] = []);
             
-            newDb['プロローグ'].push(createRound('事前準備・方針', ['text']));
+            newDb['プロローグ'].push(createRound('事前準備・方針', ['youtube', 'text']));
 
             ['1-2', '1-3', '1-4'].forEach(name => newDb['Stage 1'].push(createRound(name)));
             
@@ -2413,6 +2468,8 @@
         }
 
         function getBlockLabel(type) {
+            if (type === 'youtube') return '▶️ YouTube';
+            if (type === 'link') return '🔗 リンク';
             if (type === 'text') return '📝 メモ';
             if (type === 'good') return '✅ Good';
             if (type === 'bad') return '❌ Next';
@@ -2575,6 +2632,34 @@
                         ${nodesHtml}
                     </div>
                 `;
+            } else if (block.type === 'youtube') {
+                const videoId = extractYoutubeId(block.content || '');
+                contentHTML = `
+                    <div style="padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                        <input type="text" value="${block.content || ''}" placeholder="YouTubeのURLを貼り付けてください (例: https://youtu.be/...)" onchange="updateBlockContent('${roundId}', '${blockId}', this.value); renderMainArea();" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: 'Noto Sans JP', sans-serif; font-size: 13px;">
+                        ${videoId ? `
+                        <div style="margin-top: 12px; display: flex; gap: 12px; align-items: center; background: var(--surface); padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                            <img src="${getYoutubeThumbnailUrl(videoId)}" style="width: 120px; height: 67.5px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-strong);">
+                            <div>
+                                <div style="font-weight: 700; color: var(--ink); margin-bottom: 6px; font-size: 13px;">YouTube動画リンク</div>
+                                <a href="${block.content}" target="_blank" style="color: var(--blue); text-decoration: none; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border: 1px solid var(--blue); border-radius: var(--radius-sm); transition: all 0.15s; background: transparent;" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background='transparent'">▶️ 別タブで再生する</a>
+                            </div>
+                        </div>` : `<div style="margin-top: 12px; color: var(--ink-xlight); font-size: 12px; text-align: center; padding: 20px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm);">有効なYouTube URLを入力すると動画へのリンクが生成されます</div>`}
+                    </div>
+                `;
+            } else if (block.type === 'link') {
+                contentHTML = `
+                    <div style="padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                        <input type="text" value="${block.content || ''}" placeholder="リンク先のURLを入力してください (例: https://...)" onchange="updateBlockContent('${roundId}', '${blockId}', this.value); renderMainArea();" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: 'Noto Sans JP', sans-serif; font-size: 13px;">
+                        ${block.content && block.content.startsWith('http') ? `
+                        <div style="margin-top: 12px; display: flex; gap: 12px; align-items: center; background: var(--surface); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                            <div style="font-size: 18px;">🔗</div>
+                            <div style="flex: 1; overflow: hidden;">
+                                <a href="${block.content}" target="_blank" style="color: var(--blue); text-decoration: none; font-size: 13px; font-weight: 700; display: block; white-space: nowrap; text-overflow: ellipsis;">${block.content}</a>
+                            </div>
+                        </div>` : `<div style="margin-top: 12px; color: var(--ink-xlight); font-size: 12px; text-align: center; padding: 20px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm);">有効なURLを入力するとリンクが生成されます</div>`}
+                    </div>
+                `;
             }
 
             const isTextBlock = (block.type === 'text' || block.type === 'good' || block.type === 'bad');
@@ -2685,7 +2770,11 @@
                 html += `<div class="empty-state"><div class="emoji">📋</div><p>保存されたノートがありません。<br>「＋ 新規作成」から始めましょう。</p></div>`;
             } else {
                 sortedSessions.forEach(session => {
+                    const thumbUrl = getYoutubeThumbnailFromSession(session);
+                    const thumbHtml = thumbUrl ? `<div class="session-card-thumb" style="background-image: url('${thumbUrl}')"></div>` : `<div class="session-card-thumb empty"></div>`;
+                    
                     html += `<div class="session-card" onclick="loadSession('${session.id}')">
+                        ${thumbHtml}
                         <h3>${session.title}</h3>
                         <div class="date">作成日: ${formatDate(session.date)}</div>
                         <div class="session-card-actions">
@@ -2733,6 +2822,8 @@
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'tier')">＋ Tierリスト</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'board')">＋ 盤面</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'flowchart')">＋ フローチャート</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'youtube')">＋ YouTube</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'link')">＋ リンク</button>
                     </div>
                 </div>`;
             });
@@ -2817,6 +2908,29 @@
                             
                             if (b.type === 'image' || b.type === 'whiteboard') {
                                 stageHTML += `<div class="sum-block">${labelHtml}<br><img src="${b.content}" class="sum-img" style="margin-top:4px;"></div>`;
+                            }
+                            if (b.type === 'youtube') {
+                                const videoId = extractYoutubeId(b.content || '');
+                                if (videoId) {
+                                    stageHTML += `<div class="sum-block">${labelHtml}<br>
+                                        <a href="${b.content}" target="_blank" style="display:inline-block; margin-top:4px; position:relative; border-radius:var(--radius-sm); overflow:hidden;">
+                                            <img src="${getYoutubeThumbnailUrl(videoId)}" class="sum-img" style="max-width: 320px; display:block; margin:0; border:none;">
+                                            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3);">
+                                                <div style="background:rgba(255,0,0,0.9); color:white; padding:6px 16px; border-radius:6px; font-size:13px; font-weight:bold; display:flex; gap:6px; align-items:center;"><span>▶</span> 再生</div>
+                                            </div>
+                                        </a>
+                                    </div>`;
+                                }
+                            }
+
+                            if (b.type === 'link') {
+                                if (b.content && b.content.startsWith('http')) {
+                                    stageHTML += `<div class="sum-block">${labelHtml}<br>
+                                        <a href="${b.content}" target="_blank" style="display:inline-flex; align-items:center; gap:8px; margin-top:4px; padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--blue); text-decoration: none; font-size: 13px; font-weight: 700; word-break: break-all;">
+                                            <span style="font-size: 16px;">🔗</span> ${b.content}
+                                        </a>
+                                    </div>`;
+                                }
                             }
 
                             if (b.type === 'tier') {
