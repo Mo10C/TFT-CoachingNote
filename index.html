@@ -1123,7 +1123,7 @@
         .sum-text { font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: var(--ink); }
         .sum-text.good { color: var(--green); padding: 10px 14px; background: var(--green-bg); border-radius: var(--radius-sm); }
         .sum-text.bad { color: var(--red); padding: 10px 14px; background: var(--red-bg); border-radius: var(--radius-sm); }
-        .sum-img { max-width: 100%; max-height: 400px; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+        .sum-img { max-width: 100%; max-height: 300px; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
         .print-btn {
             background: var(--navy);
@@ -1928,11 +1928,13 @@
                         node.textContent = newTextBefore;
                         const img = document.createElement('img');
                         img.src = url; img.className = 'inline-icon'; img.alt = key;
-                        const afterTextNode = document.createTextNode(textAfterCursor);
+                        // 空のテキストノードによる入力バグを防ぐため、ゼロ幅スペース (\u200B) を挿入
+                        const afterTextNode = document.createTextNode('\u200B' + textAfterCursor);
                         node.parentNode.insertBefore(img, node.nextSibling);
                         node.parentNode.insertBefore(afterTextNode, img.nextSibling);
                         const newRange = document.createRange();
-                        newRange.setStart(afterTextNode, 0); newRange.collapse(true);
+                        newRange.setStart(afterTextNode, 1); // ゼロ幅スペースの直後にキャレットを配置
+                        newRange.collapse(true);
                         selection.removeAllRanges(); selection.addRange(newRange);
                         break;
                     }
@@ -2676,7 +2678,7 @@
             if (block.type === 'text' || block.type === 'good' || block.type === 'bad') {
                 contentHTML = `<div class="rich-editor" data-block-id="${block.id}" contenteditable="true" placeholder="テキスト入力... (例: けいとりん、なみだなど と打つとアイコンになります)"
                     style="${editorStyle}"
-                    oninput="handleRichTextInput(event, this, '${roundId}', '${blockId}')" onkeyup="handleRichTextInput(event, this, '${roundId}', '${blockId}')"
+                    oninput="handleRichTextInput(event, this, '${roundId}', '${blockId}')"
                     ondrop="setTimeout(()=>updateBlockContent('${roundId}', '${blockId}', this.innerHTML), 100)">${block.content || ''}</div>`;
             } else if (block.type === 'image') {
                 contentHTML = block.content
