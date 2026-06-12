@@ -1119,11 +1119,11 @@
         }
 
         .summary-container { margin-bottom: 24px; padding-left: 14px; border-left: 3px solid var(--gold); }
-        .sum-block { margin-bottom: 14px; }
+        .sum-block { margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
         .sum-text { font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: var(--ink); }
         .sum-text.good { color: var(--green); padding: 10px 14px; background: var(--green-bg); border-radius: var(--radius-sm); }
         .sum-text.bad { color: var(--red); padding: 10px 14px; background: var(--red-bg); border-radius: var(--radius-sm); }
-        .sum-img { max-width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+        .sum-img { max-width: 100%; max-height: 400px; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
         .print-btn {
             background: var(--navy);
@@ -1988,9 +1988,18 @@
 
         function addBlock(roundId, blockType) {
             const round = db[currentStage].find(r => r.id === roundId);
-            if (round) round.blocks.push(createBlock(blockType));
+            let newBlock = null;
+            if (round) {
+                newBlock = createBlock(blockType);
+                round.blocks.push(newBlock);
+            }
             saveToLocal(); renderMainArea();
-            setTimeout(() => { const mc = document.getElementById('main-content'); mc.scrollTo({ top: mc.scrollHeight, behavior: 'smooth' }); }, 100);
+            if (newBlock) {
+                setTimeout(() => { 
+                    const el = document.getElementById(`block-${newBlock.id}`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
         }
 
         function deleteBlock(roundId, blockId) {
@@ -2501,9 +2510,13 @@
 
         function addRound() {
             const defaultBlocks = ['プロローグ', '今日の座学'].includes(currentStage) ? ['text'] : ['good', 'bad', 'text'];
-            db[currentStage].push(createRound('', defaultBlocks));
+            const newRound = createRound('', defaultBlocks);
+            db[currentStage].push(newRound);
             saveToLocal(); renderMainArea();
-            setTimeout(() => { const mc = document.getElementById('main-content'); mc.scrollTo({ top: mc.scrollHeight, behavior: 'smooth' }); }, 100);
+            setTimeout(() => { 
+                const el = document.getElementById(`round-${newRound.id}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
         }
 
         function deleteRound(roundId) {
@@ -2943,7 +2956,7 @@
             const displayLabel = block.label !== null && block.label !== undefined ? block.label : getBlockLabel(block.type);
 
             return `
-            <div class="block-item type-${block.type}">
+            <div class="block-item type-${block.type}" id="block-${blockId}">
                 <div class="block-toolbar">
                     <input class="block-label-input" type="text" value="${displayLabel}" placeholder="${getBlockLabel(block.type)}" onchange="updateBlockLabel('${roundId}', '${blockId}', this.value)" title="クリックして名前を編集">
                     ${formatControls}
@@ -3065,7 +3078,7 @@
             }
 
             db[currentStage].forEach(round => {
-                html += `<div class="note-container">
+                html += `<div class="note-container" id="round-${round.id}">
                     <div class="container-header">
                         <span class="container-header-label">見出し</span>
                         <input type="text" value="${round.name}" onchange="updateRoundName('${round.id}', this.value)" placeholder="例：3-2, ステージ方針">
