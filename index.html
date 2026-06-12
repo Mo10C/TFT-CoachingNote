@@ -1263,7 +1263,9 @@
 
         function createBlock(type) { 
             let content = null;
-            if (type === 'tier') {
+            if (type === 'god_selection' || type === 'encounter_selection' || type === 'stargazer_selection' || type === 'psionic_selection') {
+                content = JSON.stringify([]);
+            } else if (type === 'tier') {
                 content = JSON.stringify([
                     {id: genId(), label: 'S', color: '#ff7f7f', items: []},
                     {id: genId(), label: 'A', color: '#ffbf7f', items: []},
@@ -1295,11 +1297,12 @@
             
             newDb['プロローグ'].push(createRound('事前準備・方針', ['youtube', 'text']));
 
+            newDb['Stage 1'].push(createRound('1-1(初期設定)', ['god_selection', 'encounter_selection', 'stargazer_selection', 'psionic_selection', 'text']));
             ['1-2', '1-3', '1-4'].forEach(name => newDb['Stage 1'].push(createRound(name)));
             
             [2, 3, 4].forEach(s => {
                 for (let i = 1; i <= 7; i++) {
-                    newDb[`Stage ${s}`].push(createRound(`${s}-${i}${i === 4 ? '(神々の選択)' : ''}`));
+                    newDb[`Stage ${s}`].push(createRound(`${s}-${i}${i === 4 ? '(神々の世界)' : ''}`));
                 }
             });
             
@@ -1718,6 +1721,134 @@
 
         const assetData = { champ: [], item: [] };
         const iconDict = {};
+
+        const GODS_DATA = [
+            { id: 'ahri', name: 'アーリ' },
+            { id: 'ekko', name: 'エコー' },
+            { id: 'yasuo', name: 'ヤスオ' },
+            { id: 'kayle', name: 'ケイル' },
+            { id: 'thresh', name: 'スレッシュ' },
+            { id: 'evelynn', name: 'イブリン' },
+            { id: 'varus', name: 'ヴァルス' },
+            { id: 'aurelionsol', name: 'オレリオンソル' },
+            { id: 'soraka', name: 'ソラカ' }
+        ];
+
+        const ENCOUNTERS_DATA = [
+            { id:'viktor', champ:'ビクター', jaName:'アップグレード済みのチャンピオン', color:'#7fd0ff', desc:'ランダムなコスト1の★2チャンピオンを1体所持して試合を開始する。', icon:'⚙️' },
+            { id:'miipsy', champ:'ミィプシー', jaName:'コスト2スタート', color:'#44cc66', desc:'ランダムなコスト2のチャンピオンを1体所持して試合を開始する。', icon:'⭐' },
+            { id:'lissandra', champ:'リサンドラ', jaName:'ハウリングアビス', color:'#5b6cff', desc:'ハウリングアビスの上で戦う、ランダムな1コストユニットを5体獲得する。', icon:'🌉' },
+            { id:'poppy', champ:'ポッピー', jaName:'素材アイテムの金床', color:'#ff9f43', desc:'「素材アイテムの金床」を2個所持して試合を開始する。', icon:'🛠️' },
+            { id:'twistedfate', champ:'ツイステッド・フェイト', jaName:'黄金の祭典', color:'#ffcc44', desc:'この試合で提示されるオーグメントがすべてゴールドティアになる。', icon:'🪙' },
+            { id:'missfortune', champ:'ミス・フォーチュン', jaName:'コスト3スタート', color:'#3399ff', desc:'ランダムなコスト3のチャンピオンを1体所持して試合を開始する。', icon:'🌟' },
+            { id:'fiora', champ:'フィオラ', jaName:'Silver Scrapes', color:'#c0c0c0', desc:'最後に生存している2人のプレイヤーが70ゴールドを獲得し、壮大な最後の対決が始まる。', icon:'⚔️' },
+            { id:'sona', champ:'ソナ', jaName:'お得なレベル', color:'#7fe0d0', desc:'各レベルで必要な経験値が2減少する。', icon:'🎵' },
+            { id:'zoe', champ:'ゾーイ', jaName:'ゴールドのサブスク', color:'#ffd76e', desc:'毎ステージ、ランダムな量のゴールドを獲得する。全プレイヤーが同じ量のゴールドを獲得する。', icon:'💳' },
+            { id:'graves', champ:'グレイブス', jaName:'プリズム フィナーレ', color:'#ff7ad9', desc:'この試合で最後に提示されるオーグメントがプリズムティアになる。', icon:'💎' },
+            { id:'shen', champ:'シェン', jaName:'プリズム プレリュード', color:'#7ad9ff', desc:'この試合で最初に提示されるオーグメントがプリズムティアになる。', icon:'💠' },
+            { id:'talon', champ:'タロン', jaName:'偵察部隊', color:'#9aa7b5', desc:'この試合ではオーグメントのリロールを+1獲得する。', icon:'🗡️' },
+            { id:'velkoz', champ:'ヴェル=ヴェス', jaName:'複製器×2', color:'#a06bff', desc:'「小さなチャンピオン複製器」を1個獲得する。3-5で、「小型チャンピオン複製器」を獲得する。', icon:'🔹' },
+            { id:'tahmkench', champ:'タム・ケンチ', jaName:'戦利品サブスク', color:'#e0a060', desc:'1ステージごとに、様々な戦利品の中からランダムな戦利品を獲得する。', icon:'🎁' },
+            { id:'none', champ:'なし', jaName:'神々の世界', color:'#7a8aa0', desc:'この試合では誰にも遭遇しない。', icon:'🕊️' },
+            { id:'rastt', champ:'ラースト', jaName:'紋章アンサンブル', color:'#66e0a0', desc:'3個のランダムな紋章アイテムを所持してスタートする。', icon:'🔰' },
+            { id:'ezreal', champ:'エズリアル', jaName:'開幕リロール', color:'#ffd76e', desc:'2-1で、5回分の無料リロールを獲得する。', icon:'🎲' },
+            { id:'ornn', champ:'オーン', jaName:'アーティファクトの金床', color:'#d9a05b', desc:'3-3で全プレイヤーが「アーティファクトの金床」を獲得する。', icon:'🔨' },
+            { id:'morgana', champ:'モルガナ', jaName:'プリズムパーティー', color:'#c46bff', desc:'この試合で提示されるオーグメントがすべてプリズムティアになる。', icon:'💜' },
+        ];
+
+        const STARGAZER_DATA = [
+            { id: 'boar', name: 'イノシシ', icon: '🐗', color: '#c46bff', desc: '勝利時にゴールドを獲得する。強化マスにいる味方は体力、攻撃力、魔力が8%増加する。「星の観測者」は獲得量が増加する。\n(3) 1ゴールド、2%、16%\n(4) 2ゴールド、7%、24%\n(5) 3ゴールド、12%、32%\n(6) 5ゴールド、17%、37%' },
+            { id: 'medal', name: 'メダル', icon: '🏅', color: '#c46bff', desc: '(3) 強化マスにいる味方が12%のダメージ増加効果を獲得し、味方の★3ユニット1体ごとに効果量が9%増加する。' },
+            { id: 'huntress', name: '女狩人', icon: '🏹', color: '#c46bff', desc: '戦闘開始時: 最も体力が高い敵にマークを付与する。\n(3) 15%、3マーク\n(5) 30%、5マーク\n(7) 45%、7マーク' },
+            { id: 'snake', name: '蛇', icon: '🐍', color: '#c46bff', desc: '(3) 7%耐久力、30%毒ダメージ\n(5) 12%、45%\n(7) 17%、60%' },
+            { id: 'altar', name: '祭壇', icon: '🏛️', color: '#c46bff', desc: '(3) 体力+8%、攻撃速度+12%。生贄60回で星の観測者が追加効果獲得' },
+            { id: 'spring', name: '泉', icon: '⛲', color: '#c46bff', desc: '強化マスにいる味方は、2秒ごとに最大体力の1%を回復する。強化マスにいる「星の観測者」は、追加で体力を2.5%回復し、2秒ごとに攻撃力と魔力が累積しながら増加する。\n(3) 4%\n(5) 7%' },
+            { id: 'mountain', name: '山', icon: '⛰️', color: '#c46bff', desc: '対人戦5回ごとに「星の観測者の紋章」を1つ獲得。各ラウンド様々なボーナスを獲得。' }
+        ];
+
+        const PSIONIC_DATA = [
+            { id: 'tft17_item_psyops_targetlockmod', name: 'ターゲットロック スコープ' },
+            { id: 'tft17_item_psyops_sympatheticimplantmod', name: '共感インプラント' },
+            { id: 'tft17_item_psyops_dronemod', name: 'ドローン アップリンク' },
+            { id: 'tft17_item_psyops_chemicalcapacitormod', name: 'マルウェア マトリックス' },
+            { id: 'tft17_item_psyops_grenademod', name: 'バイオ物質保存装置' }
+        ];
+
+        window.toggleGodSelection = function(roundId, blockId, godId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (!round) return;
+            const block = round.blocks.find(b => b.id === blockId);
+            if (!block) return;
+            
+            let selected = JSON.parse(block.content || '[]');
+            if (selected.includes(godId)) {
+                selected = selected.filter(id => id !== godId);
+            } else {
+                if (selected.length >= 2) {
+                    alert('神は最大2個までしか選択できません。');
+                    return;
+                }
+                selected.push(godId);
+            }
+            block.content = JSON.stringify(selected);
+            saveToLocal();
+            renderMainArea();
+        };
+
+        window.toggleEncounterSelection = function(roundId, blockId, encId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (!round) return;
+            const block = round.blocks.find(b => b.id === blockId);
+            if (!block) return;
+            
+            let selected = JSON.parse(block.content || '[]');
+            if (selected.includes(encId)) {
+                selected = []; // 選択解除
+            } else {
+                selected = [encId]; // 遭遇は1つだけ
+            }
+            block.content = JSON.stringify(selected);
+            saveToLocal();
+            renderMainArea();
+        };
+
+        window.toggleStargazerSelection = function(roundId, blockId, sgId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (!round) return;
+            const block = round.blocks.find(b => b.id === blockId);
+            if (!block) return;
+            
+            let selected = JSON.parse(block.content || '[]');
+            if (selected.includes(sgId)) {
+                selected = []; // 選択解除
+            } else {
+                selected = [sgId]; // 1つだけ
+            }
+            block.content = JSON.stringify(selected);
+            saveToLocal();
+            renderMainArea();
+        };
+
+        window.togglePsionicSelection = function(roundId, blockId, psId) {
+            const round = db[currentStage].find(r => r.id === roundId);
+            if (!round) return;
+            const block = round.blocks.find(b => b.id === blockId);
+            if (!block) return;
+            
+            let selected = JSON.parse(block.content || '[]');
+            if (selected.includes(psId)) {
+                selected = selected.filter(id => id !== psId);
+            } else {
+                if (selected.length >= 2) {
+                    alert('サイオニックアイテムは最大2個までしか選択できません。');
+                    return;
+                }
+                selected.push(psId);
+            }
+            block.content = JSON.stringify(selected);
+            saveToLocal();
+            renderMainArea();
+        };
 
         // 外部ファイル (data-*.js) で定義された変数が存在すればそちらを優先して使用します
         const activeChamps = window.CHAMPS || window.CHAMPS_DATA || window.championsData || window.champions || DEFAULT_CHAMPS_DATA;
@@ -2516,6 +2647,10 @@
             if (type === 'tier') return '🏆 Tierリスト';
             if (type === 'board') return '♟️ 盤面配置';
             if (type === 'flowchart') return '📊 フローチャート';
+            if (type === 'god_selection') return '⚡ 神の選択';
+            if (type === 'encounter_selection') return '🌟 遭遇の選択';
+            if (type === 'stargazer_selection') return '✨ 星座の選択';
+            if (type === 'psionic_selection') return '🔮 サイオニックの選択';
             return '';
         }
 
@@ -2698,6 +2833,94 @@
                         </div>` : `<div style="margin-top: 12px; color: var(--ink-xlight); font-size: 12px; text-align: center; padding: 20px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm);">有効なURLを入力するとリンクが生成されます</div>`}
                     </div>
                 `;
+            } else if (block.type === 'god_selection') {
+                let selected = [];
+                try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
+                
+                let godsHtml = `<div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
+                GODS_DATA.forEach(god => {
+                    const isSelected = selected.includes(god.id);
+                    const imgUrl = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
+                    godsHtml += `
+                        <div onclick="toggleGodSelection('${roundId}', '${blockId}', '${god.id}')" 
+                             style="cursor:pointer; display:flex; flex-direction:column; align-items:center; width:64px; opacity:${isSelected ? '1' : '0.4'}; transition:all 0.2s; position:relative; transform:${isSelected ? 'scale(1.05)' : 'scale(1)'}">
+                            <img src="${imgUrl}" style="width:48px; height:48px; border-radius:50%; border:2px solid ${isSelected ? 'var(--gold)' : 'transparent'}; box-shadow:${isSelected ? '0 0 8px rgba(200,155,60,0.6)' : 'none'}; object-fit:cover;">
+                            <span style="font-size:10px; margin-top:6px; font-weight:${isSelected ? '700' : '500'}; color:${isSelected ? 'var(--ink)' : 'var(--ink-light)'}; text-align:center;">${god.name}</span>
+                            ${isSelected ? `<div style="position:absolute; top:-4px; right:4px; background:var(--gold); color:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; box-shadow:0 1px 3px rgba(0,0,0,0.3);">✓</div>` : ''}
+                        </div>
+                    `;
+                });
+                godsHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックして神を2体まで選択してください。</div>`;
+                contentHTML = godsHtml;
+            } else if (block.type === 'encounter_selection') {
+                let selected = [];
+                try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
+                
+                let encHtml = `<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
+                ENCOUNTERS_DATA.forEach(enc => {
+                    const isSelected = selected.includes(enc.id);
+                    
+                    let cName = enc.champ;
+                    if (cName === 'ミィプシー') cName = 'ミープシー';
+                    if (cName === 'ヴェル=ヴェス') cName = 'ベル=ヴェス';
+                    if (cName === 'ラースト') cName = 'ラスート';
+                    const imgUrl = iconDict[cName];
+
+                    const iconElement = imgUrl 
+                        ? `<img src="${imgUrl}" style="width:36px; height:36px; border-radius:50%; border:2px solid ${enc.color}; object-fit:cover; background:var(--surface);">`
+                        : `<div style="width:36px; height:36px; border-radius:50%; border:2px solid ${enc.color}; background:${enc.color}22; display:flex; align-items:center; justify-content:center; font-size:18px;">${enc.icon}</div>`;
+
+                    encHtml += `
+                        <div onclick="toggleEncounterSelection('${roundId}', '${blockId}', '${enc.id}')" title="${enc.desc}"
+                             style="cursor:pointer; display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; border:2px solid ${isSelected ? enc.color : 'transparent'}; background:${isSelected ? enc.color+'22' : 'var(--surface)'}; opacity:${isSelected ? '1' : '0.6'}; transition:all 0.2s; box-shadow:${isSelected ? 'var(--shadow-sm)' : 'none'}; width: 260px;">
+                            ${iconElement}
+                            <div style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+                                <div style="font-size:10px; font-weight:700; color:${enc.color}; line-height:1.2; margin-bottom:2px;">${enc.champ}</div>
+                                <div style="font-size:12px; font-weight:700; color:var(--ink); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${enc.jaName}</div>
+                            </div>
+                            ${isSelected ? `<div style="color:${enc.color}; font-weight:bold; font-size:16px;">✓</div>` : ''}
+                        </div>`;
+                });
+                encHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックして遭遇を1つ選択してください。マウスポインタを合わせると効果を確認できます。</div>`;
+                contentHTML = encHtml;
+            } else if (block.type === 'stargazer_selection') {
+                let selected = [];
+                try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
+                
+                let sgHtml = `<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
+                STARGAZER_DATA.forEach(sg => {
+                    const isSelected = selected.includes(sg.id);
+                    sgHtml += `
+                        <div onclick="toggleStargazerSelection('${roundId}', '${blockId}', '${sg.id}')" title="${sg.desc}"
+                             style="cursor:pointer; display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; border:2px solid ${isSelected ? sg.color : 'transparent'}; background:${isSelected ? sg.color+'22' : 'var(--surface)'}; opacity:${isSelected ? '1' : '0.6'}; transition:all 0.2s; box-shadow:${isSelected ? 'var(--shadow-sm)' : 'none'}; width: 140px;">
+                            <div style="width:32px; height:32px; border-radius:50%; border:2px solid ${sg.color}; background:${sg.color}22; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;">${sg.icon}</div>
+                            <div style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+                                <div style="font-size:12px; font-weight:700; color:var(--ink); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${sg.name}</div>
+                            </div>
+                            ${isSelected ? `<div style="color:${sg.color}; font-weight:bold; font-size:16px;">✓</div>` : ''}
+                        </div>`;
+                });
+                sgHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックして星座を1つ選択してください。マウスポインタを合わせると効果を確認できます。</div>`;
+                contentHTML = sgHtml;
+            } else if (block.type === 'psionic_selection') {
+                let selected = [];
+                try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
+                
+                let psHtml = `<div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
+                PSIONIC_DATA.forEach(ps => {
+                    const isSelected = selected.includes(ps.id);
+                    const imgUrl = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
+                    psHtml += `
+                        <div onclick="togglePsionicSelection('${roundId}', '${blockId}', '${ps.id}')" 
+                             style="cursor:pointer; display:flex; flex-direction:column; align-items:center; width:80px; opacity:${isSelected ? '1' : '0.4'}; transition:all 0.2s; position:relative; transform:${isSelected ? 'scale(1.05)' : 'scale(1)'}">
+                            <img src="${imgUrl}" style="width:48px; height:48px; border-radius:8px; border:2px solid ${isSelected ? 'var(--gold)' : 'var(--border-strong)'}; box-shadow:${isSelected ? '0 0 8px rgba(200,155,60,0.6)' : 'none'}; object-fit:cover; background: var(--surface);">
+                            <span style="font-size:10px; margin-top:6px; font-weight:${isSelected ? '700' : '500'}; color:${isSelected ? 'var(--ink)' : 'var(--ink-light)'}; text-align:center; line-height: 1.2;">${ps.name}</span>
+                            ${isSelected ? `<div style="position:absolute; top:-4px; right:12px; background:var(--gold); color:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; box-shadow:0 1px 3px rgba(0,0,0,0.3);">✓</div>` : ''}
+                        </div>
+                    `;
+                });
+                psHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックしてサイオニックアイテムを2個まで選択してください。</div>`;
+                contentHTML = psHtml;
             }
 
             const isTextBlock = (block.type === 'text' || block.type === 'good' || block.type === 'bad');
@@ -2862,6 +3085,10 @@
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'flowchart')">＋ フローチャート</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'youtube')">＋ YouTube</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'link')">＋ リンク</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'god_selection')">＋ 神</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'encounter_selection')">＋ 遭遇</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'stargazer_selection')">＋ 星座</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'psionic_selection')">＋ サイオニック</button>
                     </div>
                 </div>`;
             });
@@ -2967,6 +3194,99 @@
                                             <span style="font-size: 16px;">🔗</span> ${b.content}
                                         </a>
                                     </div>`;
+                                }
+                            }
+
+                            if (b.type === 'god_selection') {
+                                let selected = [];
+                                try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
+                                if (selected.length > 0) {
+                                    let gHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    selected.forEach(godId => {
+                                        const god = GODS_DATA.find(g => g.id === godId);
+                                        if (god) {
+                                            const imgUrl = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
+                                            gHtml += `<div style="display:flex; flex-direction:column; align-items:center; background: var(--surface); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
+                                                <img src="${imgUrl}" style="width:48px; height:48px; border-radius:50%; border:2px solid var(--gold); object-fit:cover; margin-bottom:6px;">
+                                                <span style="font-size:12px; font-weight:700; color:var(--ink);">${god.name}</span>
+                                            </div>`;
+                                        }
+                                    });
+                                    gHtml += `</div></div>`;
+                                    stageHTML += gHtml;
+                                }
+                            }
+
+                            if (b.type === 'encounter_selection') {
+                                let selected = [];
+                                try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
+                                if (selected.length > 0) {
+                                    let eHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    selected.forEach(encId => {
+                                        const enc = ENCOUNTERS_DATA.find(e => e.id === encId);
+                                        if (enc) {
+                                            let cName = enc.champ;
+                                            if (cName === 'ミィプシー') cName = 'ミープシー';
+                                            if (cName === 'ヴェル=ヴェス') cName = 'ベル=ヴェス';
+                                            if (cName === 'ラースト') cName = 'ラスート';
+                                            const imgUrl = iconDict[cName];
+                                            const iconElement = imgUrl 
+                                                ? `<img src="${imgUrl}" style="width:44px; height:44px; border-radius:50%; border:2px solid ${enc.color}; object-fit:cover; background:var(--surface);">`
+                                                : `<div style="width:44px; height:44px; border-radius:50%; border:2px solid ${enc.color}; background:${enc.color}22; display:flex; align-items:center; justify-content:center; font-size:22px;">${enc.icon}</div>`;
+                                            eHtml += `<div style="display:flex; align-items:center; gap:12px; background: var(--surface); padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid ${enc.color}55; box-shadow: var(--shadow-sm); width:100%;">
+                                                ${iconElement}
+                                                <div style="flex:1;">
+                                                    <div style="font-size:11px; font-weight:700; color:${enc.color};">${enc.champ}</div>
+                                                    <div style="font-size:14px; font-weight:700; color:var(--ink);">${enc.jaName}</div>
+                                                    <div style="font-size:12px; color:var(--ink-mid); margin-top:4px;">${enc.desc}</div>
+                                                </div>
+                                            </div>`;
+                                        }
+                                    });
+                                    eHtml += `</div></div>`;
+                                    stageHTML += eHtml;
+                                }
+                            }
+
+                            if (b.type === 'stargazer_selection') {
+                                let selected = [];
+                                try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
+                                if (selected.length > 0) {
+                                    let sgHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    selected.forEach(sgId => {
+                                        const sg = STARGAZER_DATA.find(s => s.id === sgId);
+                                        if (sg) {
+                                            sgHtml += `<div style="display:flex; align-items:center; gap:12px; background: var(--surface); padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid ${sg.color}55; box-shadow: var(--shadow-sm); width:100%;">
+                                                <div style="width:44px; height:44px; border-radius:50%; border:2px solid ${sg.color}; background:${sg.color}22; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">${sg.icon}</div>
+                                                <div style="flex:1;">
+                                                    <div style="font-size:14px; font-weight:700; color:var(--ink);">${sg.name}</div>
+                                                    <div style="font-size:12px; color:var(--ink-mid); margin-top:4px; white-space:pre-wrap;">${sg.desc}</div>
+                                                </div>
+                                            </div>`;
+                                        }
+                                    });
+                                    sgHtml += `</div></div>`;
+                                    stageHTML += sgHtml;
+                                }
+                            }
+
+                            if (b.type === 'psionic_selection') {
+                                let selected = [];
+                                try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
+                                if (selected.length > 0) {
+                                    let psHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    selected.forEach(psId => {
+                                        const ps = PSIONIC_DATA.find(p => p.id === psId);
+                                        if (ps) {
+                                            const imgUrl = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
+                                            psHtml += `<div style="display:flex; flex-direction:column; align-items:center; background: var(--surface); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); width: 100px; text-align: center;">
+                                                <img src="${imgUrl}" style="width:48px; height:48px; border-radius:8px; border:2px solid var(--gold); object-fit:cover; margin-bottom:6px; background: var(--surface-2);">
+                                                <span style="font-size:11px; font-weight:700; color:var(--ink); line-height: 1.2;">${ps.name}</span>
+                                            </div>`;
+                                        }
+                                    });
+                                    psHtml += `</div></div>`;
+                                    stageHTML += psHtml;
                                 }
                             }
 
