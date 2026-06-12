@@ -2647,10 +2647,10 @@
             if (type === 'tier') return '🏆 Tierリスト';
             if (type === 'board') return '♟️ 盤面配置';
             if (type === 'flowchart') return '📊 フローチャート';
-            if (type === 'god_selection') return '⚡ 神の選択';
-            if (type === 'encounter_selection') return '🌟 遭遇の選択';
-            if (type === 'stargazer_selection') return '✨ 星座の選択';
-            if (type === 'psionic_selection') return '🔮 サイオニックの選択';
+            if (type === 'god_selection') return '⚡ 神々の世界';
+            if (type === 'encounter_selection') return '🌟 遭遇';
+            if (type === 'stargazer_selection') return '✨ 星の観測者';
+            if (type === 'psionic_selection') return '🔮 サイオニックアイテム';
             return '';
         }
 
@@ -3153,12 +3153,25 @@
                         hasStage = true;
                         stageHTML += `<div class="summary-container">`;
                         if (round.name.trim()) stageHTML += `<h3 style="margin:0 0 12px;color:var(--ink);font-size:15px;font-weight:700;">${round.name}</h3>`;
+
+                        let settingsBuffer = [];
+                        const flushSettings = () => {
+                            if (settingsBuffer.length > 0) {
+                                stageHTML += `<div class="sum-block" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:14px; align-items:stretch;">${settingsBuffer.join('')}</div>`;
+                                settingsBuffer = [];
+                            }
+                        };
+
                         valid.forEach(b => {
+                            const isSettingBlock = ['god_selection', 'encounter_selection', 'stargazer_selection', 'psionic_selection'].includes(b.type);
+                            if (!isSettingBlock) flushSettings();
+
                             const fmt = b.format || {};
                             const fmtStyle = `font-size:${fmt.fontSize||13}px;font-weight:${fmt.fontWeight||'normal'};${fmt.color?'color:'+fmt.color+';':''}`;
                             const defaultLabel = getBlockLabel(b.type);
                             const displayLabel = (b.label !== null && b.label !== undefined && b.label !== '') ? b.label : defaultLabel;
                             const labelHtml = `<div style="font-size:12px;font-weight:700;color:var(--ink-mid);margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--border-strong);display:inline-block;padding-right:24px;">${displayLabel}</div>`;
+                            const settingLabelHtml = `<div style="font-size:11px;font-weight:700;color:var(--ink-mid);margin-bottom:6px;padding-bottom:2px;border-bottom:1px solid var(--border-strong);">${displayLabel}</div>`;
 
                             if (b.type === 'text') {
                                 stageHTML += `<div class="sum-block">${labelHtml}<div class="sum-text" style="${fmtStyle}">${b.content}</div></div>`;
@@ -3201,19 +3214,19 @@
                                 let selected = [];
                                 try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
                                 if (selected.length > 0) {
-                                    let gHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    let gHtml = `<div style="display:flex; flex-direction:column; flex:1; min-width:140px;">${settingLabelHtml}<div style="display:flex; gap:8px; padding:8px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); flex:1;">`;
                                     selected.forEach(godId => {
                                         const god = GODS_DATA.find(g => g.id === godId);
                                         if (god) {
                                             const imgUrl = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
-                                            gHtml += `<div style="display:flex; flex-direction:column; align-items:center; background: var(--surface); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
-                                                <img src="${imgUrl}" style="width:48px; height:48px; border-radius:50%; border:2px solid var(--gold); object-fit:cover; margin-bottom:6px;">
-                                                <span style="font-size:12px; font-weight:700; color:var(--ink);">${god.name}</span>
+                                            gHtml += `<div style="display:flex; flex-direction:column; align-items:center; background:var(--surface); padding:6px; border-radius:var(--radius-sm); border:1px solid var(--border-strong); box-shadow:var(--shadow-sm); flex:1;">
+                                                <img src="${imgUrl}" style="width:36px; height:36px; border-radius:50%; border:2px solid var(--gold); object-fit:cover; margin-bottom:4px;">
+                                                <span style="font-size:11px; font-weight:700; color:var(--ink);">${god.name}</span>
                                             </div>`;
                                         }
                                     });
                                     gHtml += `</div></div>`;
-                                    stageHTML += gHtml;
+                                    settingsBuffer.push(gHtml);
                                 }
                             }
 
@@ -3221,7 +3234,7 @@
                                 let selected = [];
                                 try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
                                 if (selected.length > 0) {
-                                    let eHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    let eHtml = `<div style="display:flex; flex-direction:column; flex:1.5; min-width:200px;">${settingLabelHtml}<div style="display:flex; gap:8px; padding:8px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); flex:1;">`;
                                     selected.forEach(encId => {
                                         const enc = ENCOUNTERS_DATA.find(e => e.id === encId);
                                         if (enc) {
@@ -3231,20 +3244,19 @@
                                             if (cName === 'ラースト') cName = 'ラスート';
                                             const imgUrl = iconDict[cName];
                                             const iconElement = imgUrl 
-                                                ? `<img src="${imgUrl}" style="width:44px; height:44px; border-radius:50%; border:2px solid ${enc.color}; object-fit:cover; background:var(--surface);">`
-                                                : `<div style="width:44px; height:44px; border-radius:50%; border:2px solid ${enc.color}; background:${enc.color}22; display:flex; align-items:center; justify-content:center; font-size:22px;">${enc.icon}</div>`;
-                                            eHtml += `<div style="display:flex; align-items:center; gap:12px; background: var(--surface); padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid ${enc.color}55; box-shadow: var(--shadow-sm); width:100%;">
+                                                ? `<img src="${imgUrl}" style="width:36px; height:36px; border-radius:50%; border:2px solid ${enc.color}; object-fit:cover; background:var(--surface); flex-shrink:0;">`
+                                                : `<div style="width:36px; height:36px; border-radius:50%; border:2px solid ${enc.color}; background:${enc.color}22; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${enc.icon}</div>`;
+                                            eHtml += `<div style="display:flex; align-items:center; gap:8px; background:var(--surface); padding:6px 8px; border-radius:var(--radius-sm); border:1px solid ${enc.color}55; box-shadow:var(--shadow-sm); width:100%;">
                                                 ${iconElement}
-                                                <div style="flex:1;">
-                                                    <div style="font-size:11px; font-weight:700; color:${enc.color};">${enc.champ}</div>
-                                                    <div style="font-size:14px; font-weight:700; color:var(--ink);">${enc.jaName}</div>
-                                                    <div style="font-size:12px; color:var(--ink-mid); margin-top:4px;">${enc.desc}</div>
+                                                <div style="flex:1; overflow:hidden;">
+                                                    <div style="font-size:10px; font-weight:700; color:${enc.color}; line-height:1.2;">${enc.champ}</div>
+                                                    <div style="font-size:12px; font-weight:700; color:var(--ink); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${enc.jaName}">${enc.jaName}</div>
                                                 </div>
                                             </div>`;
                                         }
                                     });
                                     eHtml += `</div></div>`;
-                                    stageHTML += eHtml;
+                                    settingsBuffer.push(eHtml);
                                 }
                             }
 
@@ -3252,21 +3264,20 @@
                                 let selected = [];
                                 try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
                                 if (selected.length > 0) {
-                                    let sgHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    let sgHtml = `<div style="display:flex; flex-direction:column; flex:1; min-width:140px;">${settingLabelHtml}<div style="display:flex; gap:8px; padding:8px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); flex:1;">`;
                                     selected.forEach(sgId => {
                                         const sg = STARGAZER_DATA.find(s => s.id === sgId);
                                         if (sg) {
-                                            sgHtml += `<div style="display:flex; align-items:center; gap:12px; background: var(--surface); padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid ${sg.color}55; box-shadow: var(--shadow-sm); width:100%;">
-                                                <div style="width:44px; height:44px; border-radius:50%; border:2px solid ${sg.color}; background:${sg.color}22; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">${sg.icon}</div>
-                                                <div style="flex:1;">
-                                                    <div style="font-size:14px; font-weight:700; color:var(--ink);">${sg.name}</div>
-                                                    <div style="font-size:12px; color:var(--ink-mid); margin-top:4px; white-space:pre-wrap;">${sg.desc}</div>
+                                            sgHtml += `<div style="display:flex; align-items:center; gap:8px; background:var(--surface); padding:6px 8px; border-radius:var(--radius-sm); border:1px solid ${sg.color}55; box-shadow:var(--shadow-sm); width:100%;">
+                                                <div style="width:36px; height:36px; border-radius:50%; border:2px solid ${sg.color}; background:${sg.color}22; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${sg.icon}</div>
+                                                <div style="flex:1; overflow:hidden;">
+                                                    <div style="font-size:13px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${sg.name}">${sg.name}</div>
                                                 </div>
                                             </div>`;
                                         }
                                     });
                                     sgHtml += `</div></div>`;
-                                    stageHTML += sgHtml;
+                                    settingsBuffer.push(sgHtml);
                                 }
                             }
 
@@ -3274,19 +3285,19 @@
                                 let selected = [];
                                 try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
                                 if (selected.length > 0) {
-                                    let psHtml = `<div class="sum-block">${labelHtml}<div style="display:flex; gap:16px; margin-top:8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">`;
+                                    let psHtml = `<div style="display:flex; flex-direction:column; flex:1; min-width:140px;">${settingLabelHtml}<div style="display:flex; gap:8px; padding:8px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); flex:1;">`;
                                     selected.forEach(psId => {
                                         const ps = PSIONIC_DATA.find(p => p.id === psId);
                                         if (ps) {
                                             const imgUrl = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
-                                            psHtml += `<div style="display:flex; flex-direction:column; align-items:center; background: var(--surface); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); width: 100px; text-align: center;">
-                                                <img src="${imgUrl}" style="width:48px; height:48px; border-radius:8px; border:2px solid var(--gold); object-fit:cover; margin-bottom:6px; background: var(--surface-2);">
-                                                <span style="font-size:11px; font-weight:700; color:var(--ink); line-height: 1.2;">${ps.name}</span>
+                                            psHtml += `<div style="display:flex; flex-direction:column; align-items:center; background:var(--surface); padding:6px; border-radius:var(--radius-sm); border:1px solid var(--border-strong); box-shadow:var(--shadow-sm); flex:1; text-align:center;">
+                                                <img src="${imgUrl}" style="width:36px; height:36px; border-radius:6px; border:2px solid var(--gold); object-fit:cover; margin-bottom:4px; background:var(--surface-2);">
+                                                <span style="font-size:10px; font-weight:700; color:var(--ink); line-height:1.1;">${ps.name}</span>
                                             </div>`;
                                         }
                                     });
                                     psHtml += `</div></div>`;
-                                    stageHTML += psHtml;
+                                    settingsBuffer.push(psHtml);
                                 }
                             }
 
@@ -3393,6 +3404,7 @@
                                 stageHTML += bHtml;
                             }
                         });
+                        flushSettings();
                         stageHTML += `</div>`;
                     }
                 });
