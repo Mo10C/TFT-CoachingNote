@@ -1218,9 +1218,11 @@
         <div class="drawer-tabs">
             <button class="drawer-tab active" onclick="switchDrawerTab('champ', this)">駒</button>
             <button class="drawer-tab" onclick="switchDrawerTab('item', this)">アイテム</button>
+            <button class="drawer-tab" onclick="switchDrawerTab('special', this)">特殊</button>
         </div>
         <div id="drawer-champ" class="drawer-content active"></div>
         <div id="drawer-item" class="drawer-content"></div>
+        <div id="drawer-special" class="drawer-content"></div>
         </div>
     </div>
 
@@ -1750,7 +1752,7 @@
             {id: 'r_thiefs', name: "Rascal's Gloves", jaName: 'レディアント 盗賊のグローブ', type: 'radiant', imgName: 'tft5_item_thiefsglovesradiant', short:['レディ盗賊','光盗賊']},
         ];
 
-        const assetData = { champ: [], item: [] };
+        const assetData = { champ: [], item: [], special: [] };
         const iconDict = {};
 
         const GODS_DATA = [
@@ -1950,6 +1952,18 @@
             if (i.short) i.short.forEach(s => iconDict[s] = url);
         });
 
+        GODS_DATA.forEach(god => {
+            const url = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
+            assetData.special.push({ url, name: god.name, type: 'champ' });
+            iconDict[god.name] = url;
+        });
+
+        PSIONIC_DATA.forEach(ps => {
+            const url = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
+            assetData.special.push({ url, name: ps.name, type: 'item' });
+            iconDict[ps.name] = url;
+        });
+
         let isComposing = false;
         document.addEventListener('compositionstart', () => isComposing = true);
         document.addEventListener('compositionend', (e) => {
@@ -2032,6 +2046,31 @@
                     `</div>`;
             }).join('');
             document.getElementById('drawer-item').innerHTML = itemHtml;
+
+            const godsHtml = `<div class="drawer-section-title">神々の世界</div><div class="drawer-grid">` +
+                GODS_DATA.map(god => {
+                    const url = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
+                    return `<img src="${url}" class="asset-icon" title="${god.name}" draggable="true" ondragstart="handleDragStart(event, '${url}', '${god.name}')" alt="asset">`;
+                }).join('') + `</div>`;
+
+            const psionicHtml = `<div class="drawer-section-title">サイオニック</div><div class="drawer-grid">` +
+                PSIONIC_DATA.map(ps => {
+                    const url = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
+                    return `<img src="${url}" class="asset-icon" title="${ps.name}" draggable="true" ondragstart="handleDragStart(event, '${url}', '${ps.name}')" alt="asset">`;
+                }).join('') + `</div>`;
+
+            const encHtml = `<div class="drawer-section-title">遭遇</div><div class="drawer-grid">` +
+                ENCOUNTERS_DATA.map(enc => {
+                    let cName = enc.champ;
+                    if (cName === 'ミィプシー') cName = 'ミープシー';
+                    if (cName === 'ヴェル=ヴェス') cName = 'ベル=ヴェス';
+                    if (cName === 'ラースト') cName = 'ラスート';
+                    const url = iconDict[cName] || '';
+                    if (!url) return '';
+                    return `<img src="${url}" class="asset-icon" style="border-color:${enc.color};border-width:2px;" title="[遭遇] ${enc.jaName}" draggable="true" ondragstart="handleDragStart(event, '${url}', '${enc.jaName}')" alt="asset">`;
+                }).join('') + `</div>`;
+
+            document.getElementById('drawer-special').innerHTML = godsHtml + psionicHtml + encHtml;
         }
 
         function handleDragStart(e, url, name) {
@@ -2184,7 +2223,7 @@
         }
 
         function findNameByUrl(url) {
-            const allAssets = [...assetData.champ, ...assetData.item];
+            const allAssets = [...assetData.champ, ...assetData.item, ...assetData.special];
             const asset = allAssets.find(a => a.url === url);
             return asset ? asset.name : 'Unknown';
         }
@@ -2192,6 +2231,8 @@
         function getAssetType(url) {
             if (assetData.champ.some(c => c.url === url)) return 'champ';
             if (assetData.item.some(i => i.url === url)) return 'item';
+            const specialAsset = assetData.special.find(s => s.url === url);
+            if (specialAsset) return specialAsset.type;
             return 'unknown';
         }
 
