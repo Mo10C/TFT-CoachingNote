@@ -1903,11 +1903,24 @@
             activeItems = window.ITEMS_DATA || window.itemsData || window.items || DEFAULT_ITEMS_DATA;
         }
 
+        function kataToHira(str) {
+            if (!str) return '';
+            return str.replace(/[\u30a1-\u30f6]/g, function(match) {
+                return String.fromCharCode(match.charCodeAt(0) - 0x60);
+            });
+        }
+
         activeChamps.forEach(c => {
             if (!c.img) return;
             const url = `https://cdn.metatft.com/file/metatft/champions/tft17_${c.img.toLowerCase()}.png`;
             assetData.champ.push({ url, cost: c.cost, name: c.jaName || c.name, traits: c.traits });
-            if (c.jaName) iconDict[c.jaName] = url;
+            if (c.jaName) {
+                iconDict[c.jaName] = url;
+                iconDict[kataToHira(c.jaName)] = url;
+                const noSymbol = c.jaName.replace(/[・\s=]/g, '');
+                iconDict[noSymbol] = url;
+                iconDict[kataToHira(noSymbol)] = url;
+            }
             if (c.kana) iconDict[c.kana] = url;
             if (c.short) c.short.forEach(s => iconDict[s] = url);
         });
@@ -1938,7 +1951,16 @@
 
         let isComposing = false;
         document.addEventListener('compositionstart', () => isComposing = true);
-        document.addEventListener('compositionend', () => isComposing = false);
+        document.addEventListener('compositionend', (e) => {
+            isComposing = false;
+            if (e.target && e.target.classList && e.target.classList.contains('rich-editor')) {
+                const roundId = e.target.closest('.note-container')?.id.replace('round-', '');
+                const blockId = e.target.dataset.blockId;
+                if (roundId && blockId) {
+                    setTimeout(() => handleRichTextInput(null, e.target, roundId, blockId), 10);
+                }
+            }
+        });
 
         function handleRichTextInput(e, editorEle, roundId, blockId) {
             if (isComposing) return;
@@ -1950,7 +1972,8 @@
                 let text = node.textContent;
                 let cursorOffset = range.startOffset;
                 const textBeforeCursor = text.substring(0, cursorOffset);
-                for (let key in iconDict) {
+                const sortedKeys = Object.keys(iconDict).sort((a, b) => b.length - a.length);
+                for (let key of sortedKeys) {
                     if (textBeforeCursor.endsWith(key)) {
                         const url = iconDict[key];
                         const textAfterCursor = text.substring(cursorOffset);
