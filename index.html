@@ -831,7 +831,8 @@
         .wb-action-btn.active { background: var(--gold-pale); border-color: var(--gold); color: var(--gold-dim); }
         .wb-action-btn.primary { background: var(--navy); color: var(--gold-light); border-color: var(--navy); }
         .wb-action-btn.primary:hover { background: var(--navy-light); }
-        .wb-canvas-container { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; position: relative; max-width: 800px; /* 幅を広げたい場合はここを変更します（例: 800px, 100% など） */ }
+        .wb-canvas-container { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; position: relative; max-width: 800px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+        .wb-canvas-container:focus-visible { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,155,60,0.12); }
         canvas.whiteboard { width: 100%; aspect-ratio: 16/9; height: auto; cursor: crosshair; display: block; }
 
         /* ── TIER LIST BLOCK ── */
@@ -2682,19 +2683,48 @@
 
         function saveWbState(id) { const cvs = canvases[id]; if (cvs.undoStack.length >= 20) cvs.undoStack.shift(); cvs.undoStack.push(cvs.canvas.toDataURL()); cvs.redoStack = []; }
 
+        function loadWbBgFromDataUrl(dataUrl, roundId, blockId) {
+            const img = new Image();
+            img.onload = function() {
+                const cvs = canvases[blockId]; cvs.ctx.fillStyle = '#ffffff'; cvs.ctx.fillRect(0, 0, cvs.canvas.width, cvs.canvas.height);
+                const ratio = Math.min(cvs.canvas.width / img.width, cvs.canvas.height / img.height);
+                cvs.ctx.drawImage(img, 0, 0, img.width, img.height, (cvs.canvas.width - img.width * ratio) / 2, (cvs.canvas.height - img.height * ratio) / 2, img.width * ratio, img.height * ratio);
+                saveWbState(blockId); updateBlockContent(roundId, blockId, cvs.undoStack[cvs.undoStack.length - 1]);
+            }
+            img.src = dataUrl;
+        }
+
         window.handleWbBgUpload = function(e, roundId, blockId) {
             const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
-            reader.onload = function(evt) {
-                const img = new Image();
-                img.onload = function() {
-                    const cvs = canvases[blockId]; cvs.ctx.fillStyle = '#ffffff'; cvs.ctx.fillRect(0, 0, cvs.canvas.width, cvs.canvas.height);
-                    const ratio = Math.min(cvs.canvas.width / img.width, cvs.canvas.height / img.height);
-                    cvs.ctx.drawImage(img, 0, 0, img.width, img.height, (cvs.canvas.width - img.width * ratio) / 2, (cvs.canvas.height - img.height * ratio) / 2, img.width * ratio, img.height * ratio);
-                    saveWbState(blockId); updateBlockContent(roundId, blockId, cvs.undoStack[cvs.undoStack.length - 1]);
-                }
-                img.src = evt.target.result;
-            }
+            reader.onload = function(evt) { loadWbBgFromDataUrl(evt.target.result, roundId, blockId); }
             reader.readAsDataURL(file); e.target.value = '';
+        }
+
+        window.handleWbPaste = function(e, roundId, blockId) {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (!clipboardData || !clipboardData.items) return;
+            for (let i = 0; i < clipboardData.items.length; i++) {
+                if (clipboardData.items[i].type.indexOf('image/') === 0) {
+                    const file = clipboardData.items[i].getAsFile();
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(evt) { loadWbBgFromDataUrl(evt.target.result, roundId, blockId); };
+                        reader.readAsDataURL(file); e.preventDefault(); return;
+                    }
+                }
+            }
+        }
+
+        window.handleWbDrop = function(e, roundId, blockId) {
+            e.preventDefault();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                if (file.type.indexOf('image/') === 0) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) { loadWbBgFromDataUrl(evt.target.result, roundId, blockId); };
+                    reader.readAsDataURL(file);
+                }
+            }
         }
 
         function getMousePos(canvas, evt) { const rect = canvas.getBoundingClientRect(); return { x: (evt.clientX - rect.left) * (canvas.width / rect.width), y: (evt.clientY - rect.top) * (canvas.height / rect.height) }; }
@@ -2772,7 +2802,7 @@
                 let colorBtns = wbColors.map(color => `<button class="wb-color-btn color-btn-${block.id}" data-color="${color}" style="background:${color};" onclick="setWbColor('${block.id}', '${color}')"></button>`).join('');
                 contentHTML = `<div class="wb-toolbar-wrapper">
                     <div class="wb-actions">
-                        <label class="wb-action-btn primary" style="cursor:pointer;">🖼️ 背景を読み込む<input type="file" accept="image/*" style="display:none;" onchange="handleWbBgUpload(event, '${roundId}', '${blockId}')"></label>
+                        <label class="wb-action-btn primary" style="cursor:pointer;" title="ファイルを選択するか、下のホワイトボードをクリックしてCtrl+Vで貼り付け">🖼️ 背景を読み込む<input type="file" accept="image/*" style="display:none;" onchange="handleWbBgUpload(event, '${roundId}', '${blockId}')"></label>
                         <button id="eraser-${block.id}" class="wb-action-btn" onclick="setWbEraser('${block.id}')">🧹 消しゴム</button>
                         <button class="wb-action-btn" onclick="wbUndo('${block.id}')">↩ 戻る</button>
                         <button class="wb-action-btn" onclick="wbRedo('${block.id}')">↪ 進む</button>
@@ -2780,7 +2810,7 @@
                     </div>
                     <div class="wb-colors">${colorBtns}</div>
                 </div>
-                <div class="wb-canvas-container"><canvas class="whiteboard" data-block-id="${block.id}" data-round-id="${roundId}"></canvas></div>`;
+                <div class="wb-canvas-container" tabindex="0" onpaste="handleWbPaste(event, '${roundId}', '${blockId}')" ondragover="event.preventDefault();" ondrop="handleWbDrop(event, '${roundId}', '${blockId}')" title="クリックしてフォーカス後、Ctrl+Vで背景画像を貼り付けできます"><canvas class="whiteboard" data-block-id="${block.id}" data-round-id="${roundId}"></canvas></div>`;
             } else if (block.type === 'tier') {
                 const tierData = JSON.parse(block.content || '[]');
                 let tierHtml = `<div class="tier-list" id="tier-${block.id}">`;
