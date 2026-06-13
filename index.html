@@ -1289,7 +1289,7 @@
             }
             return { id: genId(), type: type, content: content, label: null, format: { fontSize: 13, fontWeight: 'normal', color: '' } }; 
         }
-        function createRound(name, defaultBlocks = ['good', 'bad', 'text']) { 
+        function createRound(name, defaultBlocks = ['whiteboard', 'text', 'good', 'bad']) { 
             return { 
                 id: genId(), 
                 name: name, 
@@ -2606,7 +2606,7 @@
         }
 
         function addRound() {
-            const defaultBlocks = ['プロローグ', '今日の座学'].includes(currentStage) ? ['text'] : ['good', 'bad', 'text'];
+            const defaultBlocks = ['プロローグ', '今日の座学'].includes(currentStage) ? ['text'] : ['whiteboard', 'text', 'good', 'bad'];
             const newRound = createRound('', defaultBlocks);
             db[currentStage].push(newRound);
             saveToLocal(); renderMainArea();
