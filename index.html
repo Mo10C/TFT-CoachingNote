@@ -3442,7 +3442,7 @@
 
                             if (b.type === 'link') {
                                 if (b.content && b.content.startsWith('http')) {
-                                    if (b.linkData && !b.linkData.error && b.linkData.title) {
+                                    if (b.linkData && b.linkData.title) {
                                         const d = b.linkData;
                                         const imgHtml = d.image ? `<img src="${d.image}" style="width: 120px; height: 100%; object-fit: cover; border-left: 1px solid var(--border-strong);">` : '';
                                         stageHTML += `<div class="sum-block" style="width: 100%;">${labelHtml}<br>
