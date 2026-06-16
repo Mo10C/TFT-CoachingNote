@@ -2017,12 +2017,13 @@
                 const roundId = e.target.closest('.note-container')?.id.replace('round-', '');
                 const blockId = e.target.dataset.blockId;
                 if (roundId && blockId) {
-                    setTimeout(() => handleRichTextInput(null, e.target, roundId, blockId), 10);
+                    const committedText = e.data;
+                    setTimeout(() => handleRichTextInput(null, e.target, roundId, blockId, committedText), 10);
                 }
             }
         });
 
-        function handleRichTextInput(e, editorEle, roundId, blockId) {
+        function handleRichTextInput(e, editorEle, roundId, blockId, committedText = null) {
             if (isComposing) return;
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
@@ -2035,33 +2036,26 @@
                 const sortedKeys = Object.keys(iconDict).sort((a, b) => b.length - a.length);
                 for (let key of sortedKeys) {
                     if (textBeforeCursor.endsWith(key)) {
-                        const beforeKeyIndex = textBeforeCursor.length - key.length;
-                        let charBefore = '';
-                        if (beforeKeyIndex > 0) {
-                            charBefore = textBeforeCursor.charAt(beforeKeyIndex - 1);
-                        } else {
-                            const walker = document.createTreeWalker(editorEle, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null, false);
-                            walker.currentNode = node;
-                            let prevNode = walker.previousNode();
-                            while (prevNode) {
-                                if (prevNode.nodeType === Node.TEXT_NODE) {
-                                    if (prevNode.textContent.length > 0) {
-                                        charBefore = prevNode.textContent.slice(-1);
-                                        break;
-                                    }
-                                } else if (prevNode.nodeType === Node.ELEMENT_NODE) {
-                                    const tag = prevNode.tagName.toLowerCase();
-                                    if (['br', 'img', 'div', 'p', 'li'].includes(tag)) {
-                                        charBefore = ' ';
-                                        break;
+                        let shouldReplace = false;
+
+                        if (committedText && committedText === key) {
+                            shouldReplace = true;
+                        } else if (!committedText) {
+                            const isAlphanumericKey = /^[a-zA-Z0-9]+$/.test(key);
+                            if (isAlphanumericKey) {
+                                const beforeKeyIndex = textBeforeCursor.length - key.length;
+                                if (beforeKeyIndex === 0) {
+                                    shouldReplace = true;
+                                } else {
+                                    const charBefore = textBeforeCursor.charAt(beforeKeyIndex - 1);
+                                    if (!/[a-zA-Z0-9]/.test(charBefore)) {
+                                        shouldReplace = true;
                                     }
                                 }
-                                prevNode = walker.previousNode();
                             }
                         }
 
-                        // 単語の一部として誤爆するのを防ぐため、直前の文字が英数字・ひらがな・カタカナ・漢字・長音符の場合は変換をスキップ
-                        if (charBefore && /[a-zA-Z0-9ぁ-んァ-ヶｱ-ﾝﾞ-ﾟ一-龠々ー]/.test(charBefore)) {
+                        if (!shouldReplace) {
                             continue;
                         }
 
