@@ -1410,7 +1410,7 @@
 
         function createBlock(type) { 
             let content = null;
-            if (type === 'god_selection' || type === 'encounter_selection' || type === 'stargazer_selection' || type === 'psionic_selection') {
+            if (type === 'encounter_selection' || type === 'blessing_selection') {
                 content = JSON.stringify([]);
             } else if (type === 'tier') {
                 content = JSON.stringify([
@@ -1444,7 +1444,7 @@
             
             newDb['プロローグ'].push(createRound('事前準備・方針', ['youtube', 'text']));
 
-            newDb['Stage 1'].push(createRound('1-1(初期設定)', ['god_selection', 'encounter_selection', 'stargazer_selection', 'psionic_selection', 'text']));
+            newDb['Stage 1'].push(createRound('1-1(初期設定)', ['encounter_selection', 'blessing_selection', 'text']));
             ['1-2', '1-3', '1-4'].forEach(name => newDb['Stage 1'].push(createRound(name)));
             
             [2, 3, 4].forEach(s => {
@@ -1465,54 +1465,37 @@
             return newDb;
         }
 
+        /* 🖼️ アイテム画像URL ── Set 18 / tftips CDN（シミュレータ app.js と同じ規則）
+           ── 例外は各アイテムの imgUrl で直接上書きできる。 */
+        const RADIANT_IMG_EXCEPT = {
+            'r_unstableconcoction': '5_handofjusticeradiant',
+            'r_redbuff': '5_sunfirecaperadiant',
+            'r_powergauntlet': '5_trapclawradiant'
+        };
         function getMetaTFTItemUrl(item) {
             if (!item) return "";
+            if (typeof item === 'object' && item.url) return item.url;
+            if (typeof item === 'object' && item.imgUrl) return item.imgUrl;
 
-            // 引数がオブジェクトで url がある場合は、それを優先
-            if (typeof item === 'object' && item.url) {
-                return item.url;
-            }
-            // 引数がオブジェクトで imgName がある場合は、直接URLを生成して返す
-            if (typeof item === 'object' && item.imgName) {
-                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${item.imgName}.png`;
-            }
+            const tftips = (n) => `https://tftips.b-cdn.net/item/${n}.avif?v=1`;
 
-            const nameInput = typeof item === 'string' ? item : item.name;
-            
-            if (!nameInput) return "";
-
-            // 1. サイオニック専用（ファイル名そのものが入っている場合）
-            if (nameInput.startsWith('tft17_item_psyops_')) {
-                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${nameInput}.png`;
-            }
-            
-            // アーティファクトとレディアントを結合して検索
-            const allSpecialItems = [...(window.ARTIFACTS || []), ...(window.RADIANT_ITEMS || [])];
-            const specialItem = allSpecialItems.find(a => a.name === nameInput || a.id === nameInput || a.imgName === nameInput || a.jaName === nameInput);
-            if (specialItem) {
-                if (specialItem.imgName) {
-                    return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${specialItem.imgName}.png`;
-                }
-                const formatted = specialItem.name.toLowerCase().replace(/['.\s]/g, '').replace('artifact', '');
-                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_item_${formatted}.png`;
+            // 文字列（英名・日本語名・id）で渡された場合はデータから引き直す
+            if (typeof item === 'string') {
+                const list = (typeof activeItems !== 'undefined' && activeItems.length) ? activeItems : DEFAULT_ITEMS_DATA;
+                const found = list.find(i => i.id === item || i.name === item || i.jaName === item || i.imgName === item);
+                return found ? getMetaTFTItemUrl(found) : "";
             }
 
-            // 1.5 紋章専用のURLフォーマット
-            if (nameInput.includes('Emblem')) {
-                const traitName = nameInput.replace(' Emblem', '').toLowerCase().replace(/\s+/g, '').replace(/\./g, '');
-                return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft17_item_${traitName}emblemitem.png`;
-            }
+            const id = String(item.id || '');
+            const type = item.type;
 
-            // 2. 特殊消費アイテム
-            if (nameInput === 'Tiny Champion Duplicator') return "https://cdn.metatft.com/file/metatft/items/tft_consumable_championduplicator_i.png";
-            if (nameInput === 'Lesser Champion Duplicator') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_championduplicator_iii.png";
-            if (nameInput === 'Champion Duplicator') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_neekoshelp.png";
-            if (nameInput === 'Reforger') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_itemreroller.png";
-            if (nameInput === 'Magnetic Remover' || nameInput === 'itemremover') return "https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_consumable_itemremover.png";
-
-            // 3. 通常の完成アイテム・素材（名前を整形してURL化）
-            const formatted = nameInput.toLowerCase().replace(/['.]/g, '').replace(/\s+/g, '');
-            return `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft_item_${formatted}.png`;
+            if (type === 'radiant') return tftips(RADIANT_IMG_EXCEPT[id] || `5_${id.replace(/^r_/, '')}radiant`);
+            if (type === 'artifact') return tftips(`artifact_${id}`);
+            if (type === 'comp') return tftips(`component_${id.toLowerCase()}`);
+            if (item.grantedTrait) return tftips(`18_emblem${item.grantedTrait.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+            if (id === 'forceofnature' || id === 'tacticians_crown') return tftips('18_emblemtacticianscrown');
+            if (id) return tftips(id);
+            return "";
         }
 
         let saveTimeout = null;
@@ -1652,317 +1635,338 @@
             renderMainArea();
         }
 
+        /* ── 特性（トレイト）日本語名 ── Set 18: Enchanted Wilds ── */
         const TRAIT_JA = {
-            'N.O.V.A.': 'N.O.V.A.', 'Bastion': 'バスティオン', 'Anima': 'アニマ', 'Primordian': 'プライモーディアン', 
-            'Rogue': 'ローグ', 'Fateweaver': 'フェイトウィーバー', 'Dark Star': 'ダークスター', 'Brawler': 'ブローラー',
-            'Timebreaker': 'タイムブレーカー', 'Sniper': 'スナイパー', 'Arbiter': 'アービター', 'Vanguard': 'ヴァンガード', 
-            'Shepherd': '導き手', 'Replicator': 'レプリケーター', 'Space Groove': 'スペースグルーヴ', 'Meeple': 'ミィプル', 
-            'Stargazer': '星の観測者', 'Marauder': '略奪者', 'Challenger': 'チャレンジャー', 'Psionic': 'サイオニック',
-            'Channeler': 'コンジット', 'Voyager': 'ボイジャー', 'Mecha': 'メカ', 'Redeemer': '救済者', 'missfortuneuniquetrait': '銃装機神',
-            'Oracle': '神託', 'DarkEmpress': '闇の女帝', 'Doomer': 'ドゥーマー', 'Factory': 'ファクトリー',
-            'Bulwark': 'ブルワーク', 'Eradicator': '根絶者', 'Galaxy': 'ギャラクシー', 'Commander': 'コマンダー',
-            'SacredDuelist': '聖なる決闘者', 'PartyTime': 'パーティータイム'
+            'Attuned': '同調', 'Blossom': 'ブロッサム', 'Bounty Seeker': 'バウンティーシーカー',
+            'Coven': '盟約の魔女', 'Elderwood': 'エルダーウッド', 'Fae': 'フェイ',
+            'Flora Fatalis': 'フローラ・ファターリス', 'Greenfather': '翠の父', 'Inferno': 'インフェルノ',
+            'Lunar': 'ルナー', 'Primal': 'プライマル', 'Riftbeast': 'リフトビースト',
+            'Rival': 'ライバル', 'Solar': 'ソーラー', 'Sprykin': 'スプライキン',
+            'Thornmaiden': 'ソーンメイデン',
+            'Adaptor': 'アダプター', 'Apex Predator': '捕食者の頂点', 'Avatar': 'アバター',
+            'Blackthorn': 'ブラックソーン', 'Brawler': 'ブローラー', 'Caustic': '腐敗',
+            'Defender': 'ディフェンダー', 'Emerald Aspect': 'エメラルドの神髄', 'Executioner': 'エクセキューショナー',
+            'Hunter': 'ハンター', 'Invoker': 'インヴォーカー', 'Juggernaut': 'ジャガーノート',
+            'Monolith': 'モノリス', 'Old Growth': '原生林', 'Rapidfire': 'ラピッドファイア',
+            'slayer': 'ラヴィジャー', 'Spellweaver': 'スペルウィーバー', 'Summoner': 'サモナー',
+            'Vanguard': 'ヴァンガード', 'Eclipse': 'エクリプス'
         };
 
         const TRAIT_TIERS = {
-            'Anima':[3,6],'Arbiter':[2,3],'Dark Star':[2,4,6,9],'Mecha':[3,4,6],'Meeple':[3,5,7,10],
-            'N.O.V.A.':[2,5],'Primordian':[2,3],'Psionic':[2,4],'Space Groove':[1,3,5,7,10],
-            'Stargazer':[3,4,5,6,7],'Timebreaker':[2,3,4],'Bastion':[2,4,6],'Brawler':[2,4,6],
-            'Challenger':[2,3,4,5],'Channeler':[2,3,4,5],'Fateweaver':[2,4],'Marauder':[2,4,6],
-            'Replicator':[2,4],'Rogue':[2,3,4,5],'Shepherd':[3,5,7],'Sniper':[2,3,4,5],
-            'Vanguard':[2,4,6],'Voyager':[2,3,4,5,6],'Redeemer':[1],'missfortuneuniquetrait':[1],
-            'DarkEmpress':[1], 'Doomer':[1], 'Factory':[1], 'Galaxy':[1], 'PartyTime':[1],
-            'Bulwark':[1], 'Eradicator':[1], 'Commander':[1], 'SacredDuelist':[1], 'Oracle':[1]
+            'Attuned':[1],'Blossom':[3,5,7,9,11],'Bounty Seeker':[1],'Coven':[3,4,5,7],
+            'Elderwood':[3,5,7,9,11],'Fae':[2,4],'Flora Fatalis':[1,2],'Greenfather':[1],
+            'Inferno':[2,3,5,7],'Lunar':[2,3,4,5],'Primal':[2,4],'Riftbeast':[3,5,7,10],
+            'Rival':[1,2],'Solar':[3],'Sprykin':[3,5,7],'Thornmaiden':[1],
+            'Adaptor':[2,3,4],'Apex Predator':[1],'Avatar':[1],'Blackthorn':[2,4,6],
+            'Brawler':[2,4,6],'Caustic':[1],'Defender':[2,4,6],'Emerald Aspect':[1],
+            'Executioner':[2,3,4],'Hunter':[2,3,4,5],'Invoker':[2,3,4,5],'Juggernaut':[2,4,6],
+            'Monolith':[1],'Old Growth':[1],'Rapidfire':[2,3,4,5],'slayer':[2,4,6],
+            'Spellweaver':[2,4,6],'Summoner':[2,3],'Vanguard':[2,4,6],'Eclipse':[1]
         };
 
+        /* ── チャンピオン (65体) ── Set 18: Enchanted Wilds ──
+           img には data-champions.js と同じ id を入れる（画像URLは id から自動生成）。 */
         const DEFAULT_CHAMPS_DATA = [
-            {jaName:'エイトロックス', kana:'えいとろっくす', img:'Aatrox', cost: 1, traits:['N.O.V.A.', 'Bastion'],short:['えいとろ']},
-            {jaName:'ブライアー', kana:'ぶらいあー', img:'Briar', cost: 1, traits:['Anima', 'Primordian', 'Rogue']}, 
-            {jaName:'ケイトリン', kana:'けいとりん', img:'Caitlyn', cost: 1, traits:['N.O.V.A.', 'Fateweaver'], short:['けいと', 'ケイト']},
-            {jaName:'チョ=ガス', kana:'ちょがす', img:'Chogath', cost: 1, traits:['Dark Star', 'Brawler']},
-            {jaName:'エズリアル', kana:'えずりある', img:'Ezreal', cost: 1, traits:['Timebreaker', 'Sniper'],short:['えず']},
-            {jaName:'レオナ', kana:'れおな', img:'Leona', cost: 1, traits:['Arbiter', 'Vanguard']},
-            {jaName:'リサンドラ', kana:'りさんどら', img:'Lissandra', cost: 1, traits:['Dark Star', 'Shepherd', 'Replicator'],short:['りさ']},
-            {jaName:'ナサス', kana:'なさす', img:'Nasus', cost: 1, traits:['Space Groove', 'Vanguard']},
-            {jaName:'ポッピー', kana:'ぽっぴー', img:'Poppy', cost: 1, traits:['Meeple', 'Bastion']},
-            {jaName:'レク=サイ', kana:'れくさい', img:'RekSai', cost: 1, traits:['Primordian', 'Brawler']},
-            {jaName:'タロン', kana:'たろん', img:'Talon', cost: 1, traits:['Stargazer', 'Rogue']}, 
-            {jaName:'ティーモ', kana:'てぃーも', img:'Teemo', cost: 1, traits:['Space Groove', 'Shepherd']},
-            {jaName:'ツイステッド・フェイト', kana:'ついすてっど', img:'TwistedFate', cost: 1, traits:['Stargazer', 'Fateweaver'],short:['てぃーえふ']}, 
-            {jaName:'ベイガー', kana:'べいがー', img:'Veigar', cost: 1, traits:['Meeple', 'Replicator']},
-            {jaName:'アカリ', kana:'あかり', img:'Akali', cost: 2, traits:['N.O.V.A.', 'Marauder']},
-            {jaName:'ベル=ヴェス', kana:'べるべす', img:'Belveth', cost: 2, traits:['Primordian', 'Challenger', 'Marauder']},
-            {jaName:'ナー', kana:'なー', img:'Gnar', cost: 2, traits:['Meeple', 'Sniper']},
-            {jaName:'グラガス', kana:'ぐらがす', img:'Gragas', cost: 2, traits:['Psionic', 'Brawler']},
-            {jaName:'グウェン', kana:'ぐうぇん', img:'Gwen', cost: 2, traits:['Space Groove', 'Rogue']},
-            {jaName:'ジャックス', kana:'じゃっくす', img:'Jax', cost: 2, traits:['Stargazer', 'Bastion']},
-            {jaName:'ジンクス', kana:'じんくす', img:'Jinx', cost: 2, traits:['Anima', 'Challenger']},
-            {jaName:'ミープシー', kana:'みーぷしー', img:'IvernMinion', cost: 2, traits:['Meeple', 'Shepherd', 'Voyager']},
-            {jaName:'ミリオ', kana:'みりお', img:'Milio', cost: 2, traits:['Timebreaker', 'Fateweaver']},
-            {jaName:'モルデカイザー', kana:'もるでかいざー', img:'Mordekaiser', cost: 2, traits:['Dark Star', 'Channeler', 'Vanguard'],short:['もるで']},
-            {jaName:'パンテオン', kana:'ぱんておん', img:'Pantheon', cost: 2, traits:['Timebreaker', 'Brawler', 'Replicator'],short:['ぱんて']},
-            {jaName:'パイク', kana:'ぱいく', img:'Pyke', cost: 2, traits:['Psionic', 'Voyager']},
-            {jaName:'ゾーイ', kana:'ぞーい', img:'Zoe', cost: 2, traits:['Arbiter', 'Channeler']}, 
-            {jaName:'オーロラ', kana:'おーろら', img:'Aurora', cost: 3, traits:['Anima', 'Voyager']},
-            {jaName:'ダイアナ', kana:'だいあな', img:'Diana', cost: 3, traits:['Arbiter', 'Challenger']},
-            {jaName:'フィズ', kana:'ふぃず', img:'Fizz', cost: 3, traits:['Meeple', 'Rogue']},
-            {jaName:'イラオイ', kana:'いらおい', img:'Illaoi', cost: 3, traits:['Anima', 'Vanguard', 'Shepherd']},
-            {jaName:'カイ=サ', kana:'かいさ', img:'Kaisa', cost: 3, traits:['Dark Star', 'Rogue']},
-            {jaName:'ルル', kana:'るる', img:'Lulu', cost: 3, traits:['Stargazer', 'Replicator']}, 
-            {jaName:'マオカイ', kana:'まおかい', img:'Maokai', cost: 3, traits:['N.O.V.A.', 'Brawler']},
-            {jaName:'ミス・フォーチュン', kana:'みすふぉーちゅん', img:'MissFortune', cost: 3, traits:['missfortuneuniquetrait'],short:['えむえふ','mf','MF','みすふぉ','ふぉーちゅん']},
-            {jaName:'オーン', kana:'おーん', img:'Ornn', cost: 3, traits:['Space Groove', 'Bastion']},
-            {jaName:'ラスート', kana:'らすーと', img:'Rhaast', cost: 3, traits:['Redeemer'],short:['けいん']},
-            {jaName:'サミーラ', kana:'さみーら', img:'Samira', cost: 3, traits:['Space Groove', 'Sniper']},
-            {jaName:'アーゴット', kana:'あーごっと', img:'Urgot', cost: 3, traits:['Mecha', 'Brawler', 'Marauder'],short:['あご']},
-            {jaName:'ビクター', kana:'びくたー', img:'Viktor', cost: 3, traits:['Psionic', 'Channeler']},
-            
+            // 1コスト
+            {jaName:'アカリ', kana:'あかり', img:'akali', cost:1, traits:['Inferno','Adaptor','slayer']},
+            {jaName:'カミール', kana:'かみーる', img:'camille', cost:1, traits:['Coven','slayer']},
+            {jaName:'シンダーリング', kana:'しんだーりんぐ', img:'cinderling', cost:1, traits:['Riftbeast','Hunter'], short:['しんだー']},
+            {jaName:'カルマ', kana:'かるま', img:'karma', cost:1, traits:['Blossom','Spellweaver']},
+            {jaName:'コブコ', kana:'こぶこ', img:'kobuko', cost:1, traits:['Sprykin','Brawler']},
+            {jaName:'レオナ', kana:'れおな', img:'leona', cost:1, traits:['Solar','Defender']},
+            {jaName:'オーン', kana:'おーん', img:'ornn', cost:1, traits:['Elderwood','Defender']},
+            {jaName:'小石', kana:'こいし', img:'pebbles', cost:1, traits:['Riftbeast','Invoker'], short:['ペブルス','ぺぶるす']},
+            {jaName:'ラカン', kana:'らかん', img:'rakan', cost:1, traits:['Fae','Juggernaut','Vanguard']},
+            {jaName:'レク=サイ', kana:'れくさい', img:'reksai', cost:1, traits:['Blackthorn','Brawler']},
+            {jaName:'ヴァルス', kana:'ゔぁるす', img:'varus', cost:1, traits:['Inferno','Rapidfire']},
+            {jaName:'ベイガー', kana:'べいがー', img:'veigar', cost:1, traits:['Blackthorn','Sprykin','Spellweaver']},
+            {jaName:'ザヤ', kana:'ざや', img:'xayah', cost:1, traits:['Elderwood','Fae','Rapidfire']},
+            {jaName:'ヨリック', kana:'よりっく', img:'yorick', cost:1, traits:['Blossom','Juggernaut','Summoner']},
+
+            // 2コスト
+            {jaName:'アリスター', kana:'ありすたー', img:'alistar', cost:2, traits:['Elderwood','Brawler'], short:['ありす']},
+            {jaName:'ケイトリン', kana:'けいとりん', img:'caitlyn', cost:2, traits:['Coven','Hunter'], short:['けいと','ケイト']},
+            {jaName:'エリス', kana:'えりす', img:'elise', cost:2, traits:['Coven','Vanguard']},
+            {jaName:'グロンプ', kana:'ぐろんぷ', img:'gromp', cost:2, traits:['Riftbeast','Adaptor'], short:['かえる']},
+            {jaName:'ケイル', kana:'けいる', img:'kayle', cost:2, traits:['Solar','Rapidfire']},
+            {jaName:'ルブラン', kana:'るぶらん', img:'leblanc', cost:2, traits:['Elderwood','Spellweaver'], short:['るぶ']},
+            {jaName:'マークウルフ', kana:'まーくうるふ', img:'murkwolf', cost:2, traits:['Riftbeast','slayer'], short:['おおかみ']},
+            {jaName:'スカトルクラブ', kana:'すかとるくらぶ', img:'scuttlecrab', cost:2, traits:['Riftbeast','Juggernaut'], short:['かに','スカトル']},
+            {jaName:'セジュアニ', kana:'せじゅあに', img:'sejuani', cost:2, traits:['Solar','Juggernaut'], short:['せじゅ']},
+            {jaName:'シェン', kana:'しぇん', img:'shen', cost:2, traits:['Inferno','Defender']},
+            {jaName:'ティーモ', kana:'てぃーも', img:'teemo', cost:2, traits:['Sprykin','Invoker']},
+            {jaName:'ワーウィック', kana:'わーうぃっく', img:'warwick', cost:2, traits:['Blackthorn','slayer'], short:['ww','WW','わーうぃ']},
+            {jaName:'ユナラ', kana:'ゆなら', img:'yunara', cost:2, traits:['Blossom','Executioner']},
+
+            // 3コスト
+            {jaName:'アジール', kana:'あじーる', img:'azir', cost:3, traits:['Blackthorn','Executioner','Summoner']},
+            {jaName:'カシオペア', kana:'かしおぺあ', img:'cassiopeia', cost:3, traits:['Coven','Spellweaver'], short:['かしお']},
+            {jaName:'ダイアナ', kana:'だいあな', img:'diana', cost:3, traits:['Lunar','slayer','Vanguard']},
+            {jaName:'フィドルスティックス', kana:'ふぃどるすてぃっくす', img:'fiddlesticks', cost:3, traits:['Flora Fatalis','Defender','Spellweaver'], short:['ふぃどる','かかし']},
+            {jaName:'ヘカリム', kana:'へかりむ', img:'hecarim', cost:3, traits:['Elderwood','Vanguard']},
+            {jaName:'カ=ジックス', kana:'かじっくす', img:'khazix', cost:3, traits:['Rival'], short:['かじ']},
+            {jaName:'コグ=マウ', kana:'こぐまう', img:'kogmaw', cost:3, traits:['Caustic','Adaptor','Invoker'], short:['こぐ']},
+            {jaName:'クルーグ', kana:'くるーぐ', img:'krug', cost:3, traits:['Riftbeast','Brawler'], short:['いわ']},
+            {jaName:'ラプター', kana:'らぷたー', img:'mamabeak', cost:3, traits:['Riftbeast','Summoner','Rapidfire'], short:['とり']},
+            {jaName:'マスター・イー', kana:'ますたーいー', img:'masteryi', cost:3, traits:['Blossom','Adaptor'], short:['いー','yi','YI','Yi']},
+            {jaName:'ラムス', kana:'らむす', img:'rammus', cost:3, traits:['Sprykin','Defender']},
+            {jaName:'レンガー', kana:'れんがー', img:'rengar', cost:3, traits:['Rival'], short:['れんが']},
+            {jaName:'トリスターナ', kana:'とりすたーな', img:'tristana', cost:3, traits:['Fae','Sprykin','Hunter'], short:['とりすた']},
+            {jaName:'ヴァイ', kana:'ゔぁい', img:'vi', cost:3, traits:['Primal','Juggernaut']},
+
             // 4コスト
-            {jaName:'オレリオン・ソル', kana:'おれりおんそる', img:'AurelionSol', cost: 4, traits:['Mecha', 'Channeler'],short:['おれそる']},
-            {jaName:'カルマ', kana:'かるま', img:'Karma', cost: 4, traits:['Dark Star', 'Voyager']},
-            {jaName:'キンドレッド', kana:'きんどれっど', img:'Kindred', cost: 4, traits:['N.O.V.A.', 'Challenger'],short:['きんど']},
-            {jaName:'コーキ', kana:'こーき', img:'Corki', cost: 4, traits:['Meeple', 'Fateweaver']},
-            {jaName:'ザヤ', kana:'ざや', img:'Xayah', cost: 4, traits:['Stargazer', 'Sniper']},
-            {jaName:'タム・ケンチ', kana:'たむけんち', img:'TahmKench', cost: 4, traits:['Oracle', 'Brawler'],short:['たむけん']},
-            {jaName:'ナミ', kana:'なみ', img:'Nami', cost: 4, traits:['Space Groove', 'Replicator']},
-            {jaName:'ヌヌ＆ウィルンプ', kana:'ぬぬ', img:'Nunu', cost: 4, traits:['Stargazer', 'Vanguard']},
-            {jaName:'マイティーロボ', kana:'まいてぃー', img:'galio', cost: 4, traits:['Mecha', 'Voyager'],short:['がりお']},
-            {jaName:'マスター・イー', kana:'ますたーいー', img:'MasterYi', cost: 4, traits:['Psionic', 'Marauder'], short:['いー','わいあい','yi','YI','Yi']},
-            {jaName:'モルガナ', kana:'もるがな', img:'Morgana', cost: 4, traits:['DarkEmpress']},
-            {jaName:'ラムス', kana:'らむす', img:'Rammus', cost: 4, traits:['Meeple', 'Bastion']},
-            {jaName:'リヴェン', kana:'りゔぇん', img:'Riven', cost: 4, traits:['Timebreaker', 'Rogue']},
-            {jaName:'ルブラン', kana:'るぶらん', img:'Leblanc', cost: 4, traits:['Arbiter', 'Shepherd'],short:['るぶ']},
-            
+            {jaName:'アーリ', kana:'あーり', img:'ahri', cost:4, traits:['Blossom','Spellweaver']},
+            {jaName:'アムム', kana:'あむむ', img:'amumu', cost:4, traits:['Inferno','Juggernaut']},
+            {jaName:'アフェリオス', kana:'あふぇりおす', img:'aphelios', cost:4, traits:['Lunar','Rapidfire'], short:['あふぇ']},
+            {jaName:'ブランブルバック', kana:'ぶらんぶるばっく', img:'brambleback', cost:4, traits:['Riftbeast','slayer'], short:['ぶらんぶる']},
+            {jaName:'エズリアル', kana:'えずりある', img:'ezreal', cost:4, traits:['Elderwood','Executioner'], short:['えず']},
+            {jaName:'リリア', kana:'りりあ', img:'lillia', cost:4, traits:['Fae','Defender']},
+            {jaName:'マルファイト', kana:'まるふぁいと', img:'malphite', cost:4, traits:['Blackthorn','Monolith'], short:['まるふぁ']},
+            {jaName:'モルガナ', kana:'もるがな', img:'morgana', cost:4, traits:['Coven','Invoker']},
+            {jaName:'ニダリー', kana:'にだりー', img:'nidalee', cost:4, traits:['Primal','Adaptor']},
+            {jaName:'古の番人', kana:'いにしえのばんにん', img:'sentinel', cost:4, traits:['Riftbeast','Vanguard','Invoker'], short:['ばんにん','番人']},
+            {jaName:'セト', kana:'せと', img:'sett', cost:4, traits:['Blossom','Brawler']},
+            {jaName:'シヴィア', kana:'しゔぃあ', img:'sivir', cost:4, traits:['Primal','Hunter']},
+            {jaName:'ソラカ', kana:'そらか', img:'soraka', cost:4, traits:['Flora Fatalis','Executioner']},
+            {jaName:'ザイラ', kana:'ざいら', img:'zyra', cost:4, traits:['Thornmaiden','Summoner']},
+
             // 5コスト
-            {jaName:'ヴェックス', kana:'ゔぇっくす', img:'Vex', cost: 5, traits:['Doomer']},
-            {jaName:'グレイブス', kana:'ぐれいぶす', img:'Graves', cost: 5, traits:['Factory'],short:['ぐぶ']},
-            {jaName:'シェン', kana:'しぇん', img:'Shen', cost: 5, traits:['Bulwark', 'Bastion']},
-            {jaName:'ジン', kana:'じん', img:'Jhin', cost: 5, traits:['Dark Star', 'Eradicator', 'Sniper']},
-            {jaName:'ゼド', kana:'ぜど', img:'Zed', cost: 5, traits:['Galaxy']},
-            {jaName:'ソナ', kana:'そな', img:'Sona', cost: 5, traits:['Commander', 'Psionic', 'Shepherd']},
-            {jaName:'バード', kana:'ばーど', img:'Bard', cost: 5, traits:['Meeple', 'Channeler']},
-            {jaName:'フィオラ', kana:'ふぃおら', img:'Fiora', cost: 5, traits:['SacredDuelist', 'Anima', 'Marauder']},
-            {jaName:'ブリッツクランク', kana:'ぶりっつくらんく', img:'Blitzcrank', cost: 5, traits:['PartyTime', 'Space Groove', 'Vanguard'],short:['ぶりっつ']}
+            {jaName:'アルーン', kana:'あるーん', img:'alune', cost:5, traits:['Attuned','Lunar','Spellweaver']},
+            {jaName:'アッシュ', kana:'あっしゅ', img:'ashe', cost:5, traits:['Blossom','Hunter']},
+            {jaName:'ドレイヴン', kana:'どれいゔん', img:'draven', cost:5, traits:['Bounty Seeker'], short:['どれいぶん','どれ']},
+            {jaName:'エルダードラゴン', kana:'えるだーどらごん', img:'elderdragon', cost:5, traits:['Apex Predator','Riftbeast'], short:['ドラゴン','えるだー']},
+            {jaName:'ナー', kana:'なー', img:'gnar', cost:5, traits:['Elderwood','Sprykin','Brawler']},
+            {jaName:'アイバーン', kana:'あいばーん', img:'ivern', cost:5, traits:['Greenfather'], short:['あいば']},
+            {jaName:'ケネン', kana:'けねん', img:'kennen', cost:5, traits:['Inferno','Executioner']},
+            {jaName:'ラックス', kana:'らっくす', img:'lux', cost:5, traits:['Avatar']},
+            {jaName:'マオカイ', kana:'まおかい', img:'maokai', cost:5, traits:['Old Growth','Juggernaut'], short:['まお']},
+            {jaName:'タリック', kana:'たりっく', img:'taric', cost:5, traits:['Emerald Aspect','Vanguard']}
         ];
 
+        /* ── アイテム ── Set 18: Enchanted Wilds ──
+           id は data-items.js（SIM-EDITOR の EDITS 適用後）と同じ。画像URLは id と type から生成する。 */
         const DEFAULT_ITEMS_DATA = [
-            {name:'B.F. Sword', jaName:'BFソード', short:['bf', 'BF', '剣','けん'], type: 'comp'},
-            {name:'Recurve Bow', jaName:'リカーブボウ', short:['弓', 'ボウ', 'bow','ゆみ'], type: 'comp'},
-            {name:'Needlessly Large Rod', jaName:'ロッド', short:['ロッド', 'rod', '杖','つえ','ろっど'], type: 'comp'},
-            {name:'Tear of the Goddess', jaName:'女神の涙', short:['涙', 'なみだ', 'tear'], type: 'comp'},
-            {name:'Chain Vest', jaName:'チェインベスト', short:['ベスト', 'アーマー', 'chain','べすと'], type: 'comp'},
-            {name:'Negatron Cloak', jaName:'ネガトロン', short:['マント', 'クローク', 'cloak','まんと'], type: 'comp'},
-            {name:"Giant's Belt", jaName:'ジャイアントベルト', short:['ベルト', 'belt', '帯','べると'], type: 'comp'},
-            {name:'Sparring Gloves', jaName:'グローブ', short:['手袋', 'glove','ぐろーぶ'], type: 'comp'},
-            {name:'Spatula', jaName:'へら', short:['spatula','へら'], type: 'comp'},
-            {name:'Frying Pan', jaName:'フライパン', short:['パン', 'pan'], type: 'comp'},
-            {name:'Infinity Edge', jaName:'インフィニティエッジ', short:['ie', 'IE','あいいー'], type: 'completed'},
-            {name:'spearofshojin', jaName:'ショウジン', short:['しょうじん', 'shojin','しょうじん'], type: 'completed'},
-            {name:'deathblade', jaName:'デスブレード', short:['デスブレ', 'db', 'DB','ですぶれ'], type: 'completed'},
-            {name:'Giant Slayer', jaName:'ジャイアントスレイヤー', short:['gs', 'GS', 'ジャイスレ','じゃいすれ'], type: 'completed'},
-            {name:'Hextech Gunblade', jaName:'ガンブレード', short:['ガンブレ', 'gunblade','がんぶれ'], type: 'completed'},
-            {name:'guardianangel', jaName:'ナイトエッジ', short:['edge','ないじ','ga'], type: 'completed'},
-            {name:'Bloodthirster', jaName:'ブラッドサースター', short:['bt', 'BT', 'ブラサス','ちけん','血剣'], type: 'completed'},
-            {name:'steraksgage', jaName:'ステラック', short:['篭手','こて'], type: 'completed'},
-            {name:'rapidfirecannon', jaName:'レッドバフ', short:['赤バフ', 'red','あかばふ'], type: 'completed'},
-            {name:"Guinsoo's Rageblade", jaName:'グインソー', short:['guinsoo','ぐいんそー'], type: 'completed'},
-            {name:'statikkshiv', jaName:'ヴォイドスタッフ', short:['ボイスタ', 'void','ヴぉいど'], type: 'completed'},
-            {name:"Titan's Resolve", jaName:'巨人の誓い', short:['タイタン', '巨人','きょじん'], type: 'completed'},
-            {name:'runaanshurricane', jaName:'クラーケンの怒り', short:['クラーケン','くらーけん'], type: 'completed'},
-            {name:'leviathan', jaName:'ナッシャートゥース', short:['ナッシャー','なっしゃー'], type: 'completed'},
-            {name:'Last Whisper', jaName:'ラストウィスパー', short:['lw', 'LW', 'ラスウィス','らすうぃす'], type: 'completed'},
-            {name:"Rabadon's Deathcap", jaName:'ラバドン', short:['デスキャップ', '帽子','ぼうし','らばどん'], type: 'completed'},
-            {name:"Archangel's Staff", jaName:'アークエンジェル', short:['アクエン', 'aa', 'AA','あくえん','あーく'], type: 'completed'},
-            {name:'Crownguard', jaName:'クラウンガード', short:['クラガ','くらが'], type: 'completed'},
-            {name:'Ionic Spark', jaName:'アイオニック', short:['spark','あいすぱ'], type: 'completed'},
-            {name:'Morellonomicon', jaName:'モレロノミコン', short:['モレロ','もれろ'], type: 'completed'},
-            {name:'Jeweled Gauntlet', jaName:'ジュエルガントレット', short:['jg', 'JG', 'ジュエル','じゅえがん'], type: 'completed'},
-            {name:'Blue Buff', jaName:'ブルーバフ', short:['青バフ', 'blue','あおばふ'], type: 'completed'},
-            {name:'frozenheart', jaName:'プロテクター', short:['誓い','ぷろてく'], type: 'completed'},
-            {name:'Adaptive Helm', jaName:'アダプティブヘルム', short:['アダプティブ','あだぷ'], type: 'completed'},
-            {name:'Redemption', jaName:'ビサージュ', short:['スピリット','びさーじゅ'], type: 'completed'},
-            {name:'unstableconcoction', jaName:'ハンドオブジャスティス', short:['hoj', 'HOJ','はんじゃ'], type: 'completed'},
-            {name:'Bramble Vest', jaName:'ブランブルベスト', short:['ブランブル','ぶらんぶる'], type: 'completed'},
-            {name:'Gargoyle Stoneplate', jaName:'ガーゴイル', short:['石像','がご'], type: 'completed'},
-            {name:'redbuff', jaName:'サンファイア', short:['サンファ','さんふぁいあ'], type: 'completed'},
-            {name:'nightharvester', jaName:'揺るがぬ心', short:['はがね','ゆるここ'], type: 'completed'},
-            {name:"Dragon's Claw", jaName:'ドラゴンクロウ', short:['ドラクロ','どらくろ'], type: 'completed'},
-            {name:'spectralgauntlet', jaName:'イーブンシュラウド', short:['イーブン','いぶしゅら'], type: 'completed'},
-            {name:'Quicksilver', jaName:'クイックシルバー', short:['qss', 'QSS','くいしる','さっしゅ'], type: 'completed'},
-            {name:"Warmog's Armor", jaName:'ワーモグアーマー', short:['ワーモグ','わもぐ','わーもぐ'], type: 'completed'},
-            {name:'powergauntlet', jaName:'ストライカーフレイル', short:['ストライカー','すとふれ'], type: 'completed'},
-            {name:"Thief's Gloves", jaName:'盗賊のグローブ', short:['盗賊','とうぞく'], type: 'completed'},
-            // 紋章・その他
-            {name:'Dark Star Emblem', jaName:'ダークスターの紋章', short:['ダークスター', 'darkstar','だくすた'], type: 'emblem', grantedTrait: 'Dark Star'},
-            {name:'pulsefire Emblem', jaName:'タイムブレーカーの紋章', short:['タイムブレーカー', 'timebreaker','たいぶれ'], type: 'emblem', grantedTrait: 'Timebreaker'},
-            {name:'Stargazer Emblem', jaName:'星の観測者の紋章', short:['星の観測者', 'stargazer'], type: 'emblem', grantedTrait: 'Stargazer'},
-            {name:'Space Groove Emblem', jaName:'スペースグルーヴの紋章', short:['スペースグルーヴ', 'spacegroove','すぺぐる'], type: 'emblem', grantedTrait: 'Space Groove'},
-            {name:'astronaut Emblem', jaName:'ミィプルの紋章', short:['ミィプル', 'meeple'], type: 'emblem', grantedTrait: 'Meeple'},
-            {name:'favored Emblem', jaName:'アービターの紋章', short:['アービター', 'arbiter'], type: 'emblem', grantedTrait: 'Arbiter'},
-            {name:'Primordian Emblem', jaName:'プリモーディアンの紋章', short:['プリモーディアン', 'primordian','ぷらも'], type: 'emblem', grantedTrait: 'Primordian'},
-            {name:'drx Emblem', jaName:'NOVAの紋章', short:['nova', 'NOVA','のば','のヴぁ'], type: 'emblem', grantedTrait: 'N.O.V.A.'},
-            {name:'meleetrait Emblem', jaName:'略奪者の紋章', short:['略奪者', 'marauder','りゃくだつしゃ'], type: 'emblem', grantedTrait: 'Marauder'},
-            {name:'astrait Emblem', jaName:'チャレンジャーの紋章', short:['チャレンジャー', 'challenger','ちゃれんじゃー'], type: 'emblem', grantedTrait: 'Challenger'},
-            {name:'flextrait Emblem', jaName:'ボイジャーの紋章', short:['ボイジャー', 'voyager','ぼいじゃー'], type: 'emblem', grantedTrait: 'Voyager'},
-            {name:'summontrait Emblem', jaName:'導き手の紋章', short:['導き手', 'shepherd','みちびきて'], type: 'emblem', grantedTrait: 'Shepherd'},
-            {name:'resisttank Emblem', jaName:'バスティオンの紋章', short:['バスティオン', 'bastion'], type: 'emblem', grantedTrait: 'Bastion'},
-            {name:'shieldtank Emblem', jaName:'ヴァンガードの紋章', short:['ヴァンガード', 'vanguard','ヴぁんが'], type: 'emblem', grantedTrait: 'Vanguard'},
-            {name:'hptank Emblem', jaName:'ブローラーの紋章', short:['ブローラー', 'brawler'], type: 'emblem', grantedTrait: 'Brawler'},
-            {name:'assassintrait Emblem', jaName:'ローグの紋章', short:['ローグ', 'rogue'], type: 'emblem', grantedTrait: 'Rogue'},
-            {name:'animasquad Emblem', jaName:'アニマの紋章', short:['アニマ', 'anima'], type: 'emblem', grantedTrait: 'Anima'},
-            {name:'Psyops Emblem', jaName:'サイオニックの紋章', short:['サイオニック', 'psionic'], type: 'emblem', grantedTrait: 'Psionic'},
-            {name:'rangedtrait Emblem', jaName:'スナイパーの紋章', short:['スナイパー', 'sniper'], type: 'emblem', grantedTrait: 'Sniper'},
-            {name:'forceofnature', jaName:'タクティシャンの王冠', short:['王冠', 'crown', 'fon'], type: 'emblem'},
+            // 素材アイテム
+            {id:'bfsword', name:'B.F. Sword', jaName:'B.F.ソード', short:['bf','BF','剣','けん'], type:'comp'},
+            {id:'recurvebow', name:'Recurve Bow', jaName:'リカーブボウ', short:['弓','ボウ','bow','ゆみ'], type:'comp'},
+            {id:'needlesslylargerod', name:'Needlessly Large Rod', jaName:'ムダニデカイロッド', short:['ロッド','rod','杖','つえ','ろっど'], type:'comp'},
+            {id:'tearofthegoddess', name:'Tear of the Goddess', jaName:'女神の涙', short:['涙','なみだ','tear'], type:'comp'},
+            {id:'chainvest', name:'Chain Vest', jaName:'チェインベスト', short:['ベスト','アーマー','chain','べすと'], type:'comp'},
+            {id:'negatroncloak', name:'Negatron Cloak', jaName:'ネガトロンクローク', short:['マント','クローク','cloak','まんと','ネガトロン'], type:'comp'},
+            {id:'giantsbelt', name:"Giant's Belt", jaName:'ジャイアントベルト', short:['ベルト','belt','帯','べると'], type:'comp'},
+            {id:'sparringgloves', name:'Sparring Gloves', jaName:'スパーリンググローブ', short:['手袋','glove','ぐろーぶ','グローブ'], type:'comp'},
+            {id:'spatula', name:'Spatula', jaName:'黄金のへら', short:['spatula','へら'], type:'comp'},
+            {id:'fryingpan', name:'Frying Pan', jaName:'フライパン', short:['パン','pan'], type:'comp'},
+
+            // 完成アイテム
+            {id:'deathblade', name:'Deathblade', jaName:'デスブレード', short:['デスブレ','db','DB','ですぶれ'], type:'completed'},
+            {id:'giantslayer', name:'Giant Slayer', jaName:'ジャイアントスレイヤー', short:['gs','GS','ジャイスレ','じゃいすれ'], type:'completed'},
+            {id:'hextechgunblade', name:'Hextech Gunblade', jaName:'ヘクステックガンブレード', short:['ガンブレ','gunblade','がんぶれ'], type:'completed'},
+            {id:'spearofshojin', name:'Spear of Shojin', jaName:'ショウジンの矛', short:['しょうじん','shojin','ショウジン'], type:'completed'},
+            {id:'guardianangel', name:'Edge of Night', jaName:'ナイトエッジ', short:['edge','ないじ','ga'], type:'completed'},
+            {id:'bloodthirster', name:'Bloodthirster', jaName:'ブラッドサースター', short:['bt','BT','ブラサス','ちけん','血剣'], type:'completed'},
+            {id:'steraksgage', name:"Sterak's Gage", jaName:'ステラックの篭手', short:['篭手','こて','ステラック'], type:'completed'},
+            {id:'infinityedge', name:'Infinity Edge', jaName:'インフィニティエッジ', short:['ie','IE','あいいー'], type:'completed'},
+            {id:'rapidfirecannon', name:'Red Buff', jaName:'レッドバフ', short:['赤バフ','red','あかばふ'], type:'completed'},
+            {id:'guinsoosrageblade', name:"Guinsoo's Rageblade", jaName:'グインソー レイジブレード', short:['guinsoo','ぐいんそー','グインソー'], type:'completed'},
+            {id:'statikkshiv', name:'Void Staff', jaName:'ヴォイドスタッフ', short:['ボイスタ','void','ヴぉいど'], type:'completed'},
+            {id:'titansresolve', name:"Titan's Resolve", jaName:'巨人の誓い', short:['タイタン','巨人','きょじん'], type:'completed'},
+            {id:'runaanshurricane', name:"Kraken's Fury", jaName:'クラーケンの怒り', short:['クラーケン','くらーけん'], type:'completed'},
+            {id:'leviathan', name:"Nashor's Tooth", jaName:'ナッシャー トゥース', short:['ナッシャー','なっしゃー'], type:'completed'},
+            {id:'lastwhisper', name:'Last Whisper', jaName:'ラストウィスパー', short:['lw','LW','ラスウィス','らすうぃす'], type:'completed'},
+            {id:'rabadonsdeathcap', name:"Rabadon's Deathcap", jaName:'ラバドンデスキャップ', short:['デスキャップ','帽子','ぼうし','らばどん','ラバドン'], type:'completed'},
+            {id:'archangelsstaff', name:"Archangel's Staff", jaName:'アークエンジェルスタッフ', short:['アクエン','aa','AA','あくえん','あーく'], type:'completed'},
+            {id:'crownguard', name:'Crownguard', jaName:'クラウンガード', short:['クラガ','くらが'], type:'completed'},
+            {id:'ionicspark', name:'Ionic Spark', jaName:'アイオニックスパーク', short:['spark','あいすぱ','アイオニック'], type:'completed'},
+            {id:'morellonomicon', name:'Morellonomicon', jaName:'モレロノミコン', short:['モレロ','もれろ'], type:'completed'},
+            {id:'jeweledgauntlet', name:'Jeweled Gauntlet', jaName:'ジュエル ガントレット', short:['jg','JG','ジュエル','じゅえがん'], type:'completed'},
+            {id:'bluebuff', name:'Blue Buff', jaName:'ブルーバフ', short:['青バフ','blue','あおばふ'], type:'completed'},
+            {id:'frozenheart', name:"Protector's Vow", jaName:'プロテクターの誓い', short:['誓い','ぷろてく','プロテクター'], type:'completed'},
+            {id:'adaptivehelm', name:'Adaptive Helm', jaName:'アダプティブヘルム', short:['アダプティブ','あだぷ'], type:'completed'},
+            {id:'redemption', name:'Spirit Visage', jaName:'スピリット ビサージュ', short:['スピリット','びさーじゅ','ビサージュ'], type:'completed'},
+            {id:'unstableconcoction', name:'Hand of Justice', jaName:'ハンド オブ ジャスティス', short:['hoj','HOJ','はんじゃ'], type:'completed'},
+            {id:'bramblevest', name:'Bramble Vest', jaName:'ブランブルベスト', short:['ブランブル','ぶらんぶる'], type:'completed'},
+            {id:'gargoylestoneplate', name:'Gargoyle Stoneplate', jaName:'ガーゴイルストーンプレート', short:['石像','がご','ガーゴイル'], type:'completed'},
+            {id:'redbuff', name:'Sunfire Cape', jaName:'サンファイアケープ', short:['サンファ','さんふぁいあ'], type:'completed'},
+            {id:'nightharvester', name:'Steadfast Heart', jaName:'揺るがぬ心', short:['はがね','ゆるここ'], type:'completed'},
+            {id:'dragonsclaw', name:"Dragon's Claw", jaName:'ドラゴン クロウ', short:['ドラクロ','どらくろ'], type:'completed'},
+            {id:'spectralgauntlet', name:'Evenshroud', jaName:'イーブンシュラウド', short:['イーブン','いぶしゅら'], type:'completed'},
+            {id:'quicksilver', name:'Quicksilver', jaName:'クイックシルバー', short:['qss','QSS','くいしる','さっしゅ'], type:'completed'},
+            {id:'warmogsarmor', name:"Warmog's Armor", jaName:'ワーモグ アーマー', short:['ワーモグ','わもぐ','わーもぐ'], type:'completed'},
+            {id:'powergauntlet', name:'Striker Flail', jaName:'ストライカー フレイル', short:['ストライカー','すとふれ'], type:'completed'},
+            {id:'thiefsgloves', name:"Thief's Gloves", jaName:'盗賊のグローブ', short:['盗賊','とうぞく'], type:'completed'},
+            {id:'crown_of_demacia', name:'Crown of Demacia', jaName:'デマーシアの王冠', short:['でまーしあ','デマーシア'], type:'completed', imgUrl:'https://tftips.b-cdn.net/item/9_crownofdemacia.avif?v=1'},
+
+            // 紋章（へら合成）
+            {id:'emblem_fae', name:'Fae Emblem', jaName:'フェイの紋章', short:['フェイ','fae'], type:'emblem', grantedTrait:'Fae'},
+            {id:'emblem_inferno', name:'Inferno Emblem', jaName:'インフェルノの紋章', short:['インフェルノ','inferno'], type:'emblem', grantedTrait:'Inferno'},
+            {id:'emblem_blossom', name:'Blossom Emblem', jaName:'ブロッサムの紋章', short:['ブロッサム','blossom'], type:'emblem', grantedTrait:'Blossom'},
+            {id:'emblem_lunar', name:'Lunar Emblem', jaName:'ルナーの紋章', short:['ルナー','lunar'], type:'emblem', grantedTrait:'Lunar'},
+            {id:'emblem_elderwood', name:'Elderwood Emblem', jaName:'エルダーウッドの紋章', short:['エルダーウッド','elderwood'], type:'emblem', grantedTrait:'Elderwood'},
+            {id:'emblem_sprykin', name:'Sprykin Emblem', jaName:'スプライキンの紋章', short:['スプライキン','sprykin'], type:'emblem', grantedTrait:'Sprykin'},
+            {id:'emblem_blackthorn', name:'Blackthorn Emblem', jaName:'ブラックソーンの紋章', short:['ブラックソーン','blackthorn'], type:'emblem', grantedTrait:'Blackthorn'},
+            {id:'emblem_primal', name:'Primal Emblem', jaName:'プライマルの紋章', short:['プライマル','primal'], type:'emblem', grantedTrait:'Primal'},
+
+            // 紋章（フライパン合成）
+            {id:'emblem_hunter', name:'Hunter Emblem', jaName:'ハンターの紋章', short:['ハンター','hunter'], type:'emblem', grantedTrait:'Hunter'},
+            {id:'emblem_rapidfire', name:'Rapidfire Emblem', jaName:'ラピッドファイアの紋章', short:['ラピッドファイア','rapidfire'], type:'emblem', grantedTrait:'Rapidfire'},
+            {id:'emblem_spellweaver', name:'Spellweaver Emblem', jaName:'スペルウィーバーの紋章', short:['スペルウィーバー','spellweaver'], type:'emblem', grantedTrait:'Spellweaver'},
+            {id:'emblem_invoker', name:'Invoker Emblem', jaName:'インヴォーカーの紋章', short:['インヴォーカー','invoker'], type:'emblem', grantedTrait:'Invoker'},
+            {id:'emblem_vanguard', name:'Vanguard Emblem', jaName:'ヴァンガードの紋章', short:['ヴァンガード','vanguard'], type:'emblem', grantedTrait:'Vanguard'},
+            {id:'emblem_slayer', name:'Ravager Emblem', jaName:'ラヴィジャーの紋章', short:['ラヴィジャー','slayer'], type:'emblem', grantedTrait:'slayer'},
+            {id:'emblem_brawler', name:'Brawler Emblem', jaName:'ブローラーの紋章', short:['ブローラー','brawler'], type:'emblem', grantedTrait:'Brawler'},
+            {id:'emblem_executioner', name:'Executioner Emblem', jaName:'エクセキューショナーの紋章', short:['エクセキューショナー','executioner'], type:'emblem', grantedTrait:'Executioner'},
+
+            // 紋章（作成不能）
+            {id:'emblem_coven', name:'Coven Emblem', jaName:'盟約の魔女の紋章', short:['盟約の魔女','coven'], type:'emblem', grantedTrait:'Coven'},
+            {id:'emblem_defender', name:'Defender Emblem', jaName:'ディフェンダーの紋章', short:['ディフェンダー','defender'], type:'emblem', grantedTrait:'Defender'},
+            {id:'emblem_juggernaut', name:'Juggernaut Emblem', jaName:'ジャガーノートの紋章', short:['ジャガーノート','juggernaut'], type:'emblem', grantedTrait:'Juggernaut'},
+            {id:'emblem_florafatalis', name:'Flora Fatalis Emblem', jaName:'フローラ・ファターリスの紋章', short:['フローラ','florafatalis'], type:'emblem', grantedTrait:'Flora Fatalis'},
+
+            // タクティシャン系・消費アイテム
+            {id:'forceofnature', name:"Tactician's Crown", jaName:'タクティシャンの王冠', short:['王冠','crown','fon','おうかん'], type:'emblem'},
+            {id:'tacticianscape', name:"Tactician's Cape", jaName:'タクティシャンのケープ', short:['ケープ','けーぷ'], type:'emblem'},
+            {id:'tacticiansshield', name:"Tactician's Shield", jaName:'タクティシャンの盾', short:['盾','たて'], type:'emblem'},
+            {id:'championduplicator_i', name:'Tiny Champion Duplicator', jaName:'小さなチャンピオン複製機', short:['小複製','ちいさなふくせい'], type:'emblem'},
+            {id:'championduplicator_iii', name:'Lesser Champion Duplicator', jaName:'小型チャンピオン複製機', short:['小型複製','こがたふくせい'], type:'emblem'},
+            {id:'neekoshelp', name:'Champion Duplicator', jaName:'チャンピオン複製機', short:['複製機','ふくせいき'], type:'emblem'},
+            {id:'itemreroller', name:'Reforger', jaName:'再合成装置', short:['再合成','さいごうせい','リフォージ'], type:'emblem'},
+            {id:'itemremover', name:'Magnetic Remover', jaName:'磁力式除去装置', short:['除去','じょきょ','じしゃく'], type:'emblem'},
 
             // アーティファクト
-            {id: 'ahris_aura', name: "Ahri's Aura", jaName: 'アーリのオーラ', type: 'artifact', imgName: 'tft17_item_artifact_ahriartifact', short:['アーリオーラ','あーりのおーら']},
-            {id: 'evelynns_intuition', name: "Evelynn's Intuition", jaName: 'イブリンの直感', type: 'artifact', imgName: 'tft17_item_artifact_evelynnartifact', short:['いぶりんのちょっかん']},
-            {id: 'trinityforce', name: 'Trinity Force', jaName: 'インフィニティ フォース', type: 'artifact', imgName: 'tft4_item_ornninfinityforce', short:['インフィニティフォース','みつまた']},
-            {id: 'varuss_tenacity', name: "Varus's Tenacity", jaName: 'ヴァルスの執念', type: 'artifact', imgName: 'tft17_item_artifact_varusartifact', short:['ゔぁるすのしゅうねん']},
-            {id: 'witsend', name: "Wit's End", jaName: 'ウィッツ エンド', type: 'artifact', imgName: 'tft_item_artifact_witsend', short:['ウィッツエンド','うぃっつえんど']},
-            {id: 'voidgauntlet', name: 'Void Gauntlet', jaName: 'ヴォイド ガントレット', type: 'artifact', imgName: 'tft_item_artifact_voidgauntlet', short:['ヴォイドガントレット']},
-            {id: 'ekkos_patience', name: "Ekko's Patience", jaName: 'エコーの忍耐', type: 'artifact', imgName: 'tft17_item_artifact_ekkoartifact', short:['えこーのにんたい']},
-            {id: 'gamblersblade', name: "Gambler's Blade", jaName: 'ギャンブラーの剣', type: 'artifact', imgName: 'tft7_item_shimmerscalegamblersblade', short:['ぎゃんぶらー','ぎゃんけん']},
-            {id: 'goldcollector', name: 'The Collector', jaName: 'ゴールド コレクター', type: 'artifact', imgName: 'tft4_item_ornnthecollector', short:['ゴールドコレクター','コレクター','金コレ','ごるこれ']},
-            {id: 'seekersarmguard', name: "Seeker's Armguard", jaName: 'シーカー アームガード', type: 'artifact', imgName: 'tft_item_artifact_seekersarmguard', short:['シーカーアームガード','しーかー','あむが']},
-            {id: 'silvermeredawn', name: 'Silvermere Dawn', jaName: 'シルバーミアの夜明け', type: 'artifact', imgName: 'tft_item_artifact_silvermeredawn', short:['しるばーみあ']},
-            {id: 'statikkshiv_artifact', name: 'Statikk Shiv Artifact', jaName: 'スタティック シヴ', type: 'artifact', imgName: 'tft_item_artifact_statikkshiv', short:['スタティックシヴ','赤シヴ']},
-            {id: 'snipersfocus', name: "Sniper's Focus", jaName: 'スナイパー フォーカス', type: 'artifact', imgName: 'tft9_item_ornnhorizonfocus', short:['スナイパーフォーカス','すなふぉ']},
-            {id: 'threshs_lantern', name: "Thresh's Lantern", jaName: 'スレッシュのランタン', type: 'artifact', imgName: 'tft17_item_artifact_threshlantern', short:['すれっしゅのらんたん','らんたん']},
-            {id: 'zhonyasparadox', name: "Zhonya's Paradox", jaName: 'ゾーニャの砂時計', type: 'artifact', imgName: 'tft4_item_ornnzhonyasparadox', short:['ゾーニャ','ぞーにゃ','ぞにゃ']},
-            {id: 'sorakas_miracle', name: "Soraka's Miracle", jaName: 'ソラカの奇跡', type: 'artifact', imgName: 'tft17_item_artifact_sorakaartifact', short:['そらかのきせき']},
-            {id: 'titanichydra', name: 'Titanic Hydra', jaName: 'タイタン ハイドラ', type: 'artifact', imgName: 'tft_item_artifact_titanichydra', short:['タイタンハイドラ']},
-            {id: 'deathsdefiance', name: "Death's Defiance", jaName: 'デス ディファイアンス', type: 'artifact', imgName: 'tft4_item_ornndeathsdefiance', short:['デスディファイアンス','ですでぃふぁいあんす']},
-            {id: 'dawncore', name: 'Dawncore', jaName: 'ドーンコア', type: 'artifact', imgName: 'tft_item_artifact_dawncore', short:['どーんこあ']},
-            {id: 'hullcrusher', name: 'Hullcrusher', jaName: 'ハルクラッシャー', type: 'artifact', imgName: 'tft9_item_ornnhullbreaker', short:['ハルクラ','はるくら','はるくらっしゃー']},
-            {id: 'fishbones', name: 'Fishbones', jaName: 'フィッシュボーン', type: 'artifact', imgName: 'tft_item_artifact_fishbones', short:['ふぃっしゅぼーん']},
-            {id: 'flickerblade', name: 'Flickerblade', jaName: 'フリッカーブレード', type: 'artifact', imgName: 'tft_item_artifact_navoriflickerblades', short:['ふりっかー']},
-            {id: 'prowlersclaw', name: "Prowler's Claw", jaName: 'プローラー クロウ', type: 'artifact', imgName: 'tft_item_artifact_prowlersclaw', short:['プローラークロウ','ぷろーらー']},
-            {id: 'mittens', name: 'Mittens', jaName: 'ミトン', type: 'artifact', imgName: 'tft_item_artifact_mittens', short:['みとん']},
-            {id: 'mogulsmail', name: "Mogul's Mail", jaName: 'モーグル メイル', type: 'artifact', imgName: 'tft7_item_shimmerscalemogulsmail', short:['モーグルメイル','もーぐる']},
-            {id: 'yasuos_bladework', name: "Yasuo's Bladework", jaName: 'ヤスオのブレードワーク', type: 'artifact', imgName: 'tft17_item_artifact_yasuoartifact', short:['やすおのぶれーどわーく']},
-            {id: 'lightshieldcrest', name: 'Lightshield Crest', jaName: 'ライトシールドのクレスト', type: 'artifact', imgName: 'tft_item_artifact_lightshieldcrest', short:['らいとしーるど']},
-            {id: 'rapidfirecannon_artifact', name: 'Rapid Firecannon Artifact', jaName: 'ラピッド ファイアキャノン', type: 'artifact', imgName: 'tft_item_artifact_rapidfirecannon', short:['ラピッドファイアキャノン','rfc','RFC','らぴふぁ']},
-            {id: 'lichbane', name: 'Lich Bane', jaName: 'リッチ ベイン', type: 'artifact', imgName: 'tft_item_artifact_lichbane', short:['リッチベイン','りっちべいん']},
-            {id: 'ludenstempest', name: "Luden's Tempest", jaName: 'ルーデン テンペスト', type: 'artifact', imgName: 'tft_item_artifact_ludenstempest', short:['ルーデンテンペスト','るーでん']},
-            {id: 'unendingdespair', name: 'Unending Despair', jaName: '不屈', type: 'artifact', imgName: 'tft_item_artifact_unendingdespair', short:['ふくつ']},
-            {id: 'everlastingpact', name: 'Everlasting Pact', jaName: '不滅の協定', type: 'artifact', imgName: 'tft_item_artifact_eternalpact', short:['ふめつのきょうてい','ふめつ']},
-            {id: 'dusksblessing', name: "Dusk's Blessing", jaName: '夕闇の加護', type: 'artifact', imgName: 'tft_item_artifact_aegisofdusk', short:['ゆうやみ']},
-            {id: 'dawnsblessing', name: "Dawn's Blessing", jaName: '夜明けの加護', type: 'artifact', imgName: 'tft_item_artifact_aegisofdawn', short:['よあけ']},
-            {id: 'hatjuice', name: 'Hat Juice', jaName: '帽子ジュース', type: 'artifact', imgName: 'tft_item_artifact_cappajuice', short:['ぼうしじゅーす','帽子汁']},
-            {id: 'blightingjewel', name: 'Blighting Jewel', jaName: '枯死の宝石', type: 'artifact', imgName: 'tft_item_artifact_blightingjewel', short:['こしのほうせき','こし']},
-            {id: 'hellfirehatchet', name: 'Hellfire Hatchet', jaName: '獄炎のハチェット', type: 'artifact', imgName: 'tft_item_artifact_hellfirehatchet', short:['ごくえん','はちぇっと']},
-            {id: 'talismanofascension', name: 'Talisman of Ascension', jaName: '超越のタリスマン', type: 'artifact', imgName: 'tft_item_artifact_talismanofascension', short:['タリスマン','ちょうえつ','きんたま']},
-            {id: 'crown_of_demacia', name: 'Crown of Demacia', jaName: 'デマーシアの王冠', type: 'artifact', imgName: 'tft9_item_crownofdemacia', short:['でまーしあ','王冠','おうかん']},
+            {id:'trinityforce', name:'Trinity Force', jaName:'インフィニティ フォース', type:'artifact', short:['インフィニティフォース','みつまた'], imgUrl:'https://tftips.b-cdn.net/item/4_ornninfinityforce.avif?v=1'},
+            {id:'witsend', name:"Wit's End", jaName:'ウィッツ エンド', type:'artifact', short:['ウィッツエンド','うぃっつえんど']},
+            {id:'voidgauntlet', name:'Void Gauntlet', jaName:'ヴォイド ガントレット', type:'artifact', short:['ヴォイドガントレット']},
+            {id:'gamblersblade', name:"Gambler's Blade", jaName:'ギャンブラーの剣', type:'artifact', short:['ぎゃんぶらー','ぎゃんけん']},
+            {id:'goldcollector', name:'The Collector', jaName:'ゴールド コレクター', type:'artifact', short:['ゴールドコレクター','コレクター','金コレ','ごるこれ']},
+            {id:'seekersarmguard', name:"Seeker's Armguard", jaName:'シーカー アームガード', type:'artifact', short:['シーカーアームガード','しーかー','あむが']},
+            {id:'silvermeredawn', name:'Silvermere Dawn', jaName:'シルバーミアの夜明け', type:'artifact', short:['しるばーみあ']},
+            {id:'statikkshiv_art', name:'Statikk Shiv', jaName:'スタティック シヴ', type:'artifact', short:['スタティックシヴ','赤シヴ'], imgUrl:'https://tftips.b-cdn.net/item/artifact_statikkshiv.avif?v=1'},
+            {id:'snipersfocus', name:"Sniper's Focus", jaName:'スナイパー フォーカス', type:'artifact', short:['スナイパーフォーカス','すなふぉ'], imgUrl:'https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/tft9_item_ornnhorizonfocus.png'},
+            {id:'zhonyasparadox', name:"Zhonya's Paradox", jaName:'ゾーニャの砂時計', type:'artifact', short:['ゾーニャ','ぞーにゃ','ぞにゃ']},
+            {id:'titanichydra', name:'Titanic Hydra', jaName:'タイタン ハイドラ', type:'artifact', short:['タイタンハイドラ']},
+            {id:'deathsdefiance', name:"Death's Defiance", jaName:'デス ディファイアンス', type:'artifact', short:['デスディファイアンス','ですでぃふぁいあんす']},
+            {id:'dawncore', name:'Dawncore', jaName:'ドーンコア', type:'artifact', short:['どーんこあ']},
+            {id:'hullcrusher', name:'Hullcrusher', jaName:'ハルクラッシャー', type:'artifact', short:['ハルクラ','はるくら','はるくらっしゃー']},
+            {id:'fishbones', name:'Fishbones', jaName:'フィッシュボーン', type:'artifact', short:['ふぃっしゅぼーん']},
+            {id:'forbiddenidol', name:'Forbidden Idol', jaName:'フォビドゥン アイドル', type:'artifact', short:['フォビドゥンアイドル','ふぉびどぅん']},
+            {id:'navoriflickerblade', name:'Flickerblade', jaName:'フリッカーブレード', type:'artifact', short:['ふりっかー','フリッカー']},
+            {id:'prowlersclaw', name:"Prowler's Claw", jaName:'プローラー クロウ', type:'artifact', short:['プローラークロウ','ぷろーらー']},
+            {id:'horizonfocus', name:'Horizon Focus', jaName:'ホライゾン フォーカス', type:'artifact', short:['ホライゾンフォーカス','ほらいぞん']},
+            {id:'manazane', name:'Manazane', jaName:'マナザネ', type:'artifact', short:['まなざね']},
+            {id:'mittens', name:'Mittens', jaName:'ミトン', type:'artifact', short:['みとん']},
+            {id:'mogulsmail', name:"Mogul's Mail", jaName:'モーグル メイル', type:'artifact', short:['モーグルメイル','もーぐる']},
+            {id:'lightshieldcrest', name:'Lightshield Crest', jaName:'ライトシールドのクレスト', type:'artifact', short:['らいとしーるど']},
+            {id:'rapidfirecannon_art', name:'Rapid Firecannon', jaName:'ラピッド ファイアキャノン', type:'artifact', short:['ラピッドファイアキャノン','rfc','RFC','らぴふぁ'], imgUrl:'https://tftips.b-cdn.net/item/artifact_rapidfirecannon.avif?v=1'},
+            {id:'lichbane', name:'Lich Bane', jaName:'リッチ ベイン', type:'artifact', short:['リッチベイン','りっちべいん']},
+            {id:'ludenstempest', name:"Luden's Tempest", jaName:'ルーデン テンペスト', type:'artifact', short:['ルーデンテンペスト','るーでん']},
+            {id:'theindomitable', name:'Unending Despair', jaName:'不屈', type:'artifact', short:['ふくつ']},
+            {id:'eternalpact', name:'Everlasting Pact', jaName:'不滅の協定', type:'artifact', short:['ふめつのきょうてい','ふめつ']},
+            {id:'aegisofdusk', name:"Dusk's Blessing", jaName:'夕闇の加護', type:'artifact', short:['ゆうやみ']},
+            {id:'aegisofdawn', name:"Dawn's Blessing", jaName:'夜明けの加護', type:'artifact', short:['よあけ']},
+            {id:'cappajuice', name:'Hat Juice', jaName:'帽子ジュース', type:'artifact', short:['ぼうしじゅーす','帽子汁']},
+            {id:'blightingjewel', name:'Blighting Jewel', jaName:'枯死の宝石', type:'artifact', short:['こしのほうせき','こし']},
+            {id:'hellfirehatchet', name:'Hellfire Hatchet', jaName:'獄炎のハチェット', type:'artifact', short:['ごくえん','はちぇっと']},
+            {id:'talismanofascension', name:'Talisman of Ascension', jaName:'超越のタリスマン', type:'artifact', short:['タリスマン','ちょうえつ']},
+
             // レディアントアイテム
-            {id: 'r_deathblade', name: 'Luminous Deathblade', jaName: 'レディアント デスブレード', type: 'radiant', imgName: 'tft5_item_deathbladeradiant', short:['レディデスブレ','光デスブレ']},
-            {id: 'r_giantslayer', name: 'Demonslayer', jaName: 'レディアント ジャイアントスレイヤー', type: 'radiant', imgName: 'tft5_item_giantslayerradiant', short:['レディジャイスレ','光ジャイスレ']},
-            {id: 'r_gunblade', name: 'Hextech Lifeblade', jaName: 'レディアント ヘクステックガンブレード', type: 'radiant', imgName: 'tft5_item_hextechgunbladeradiant', short:['レディガンブレ','光ガンブレ']},
-            {id: 'r_shojin', name: 'Spear of Hirana', jaName: 'レディアント ショウジンの矛', type: 'radiant', imgName: 'tft5_item_spearofshojinradiant', short:['レディショウジン','光ショウジン']},
-            {id: 'r_edgeofnight', name: 'Brink of Dawn', jaName: 'レディアント ナイトエッジ', type: 'radiant', imgName: 'tft5_item_guardianangelradiant', short:['レディナイトエッジ','光ナイトエッジ']},
-            {id: 'r_bloodthirster', name: 'Blessed Bloodthirster', jaName: 'レディアント ブラッドサースター', type: 'radiant', imgName: 'tft5_item_bloodthirsterradiant', short:['レディブラサス','光ブラサス','光血剣']},
-            {id: 'r_steraksgage', name: "Sterak's Megashield", jaName: 'レディアント ステラックの篭手', type: 'radiant', imgName: 'tft5_item_steraksgageradiant', short:['レディステラック','光ステラック']},
-            {id: 'r_infinityedge', name: 'Zenith Edge', jaName: 'レディアント インフィニティエッジ', type: 'radiant', imgName: 'tft5_item_infinityedgeradiant', short:['レディIE','光IE']},
-            {id: 'r_rapidfirecannon', name: 'Crest of Cinders', jaName: 'レディアント レッドバフ', type: 'radiant', imgName: 'tft5_item_rapidfirecannonradiant', short:['レディ赤バフ','光赤バフ','光レッドバフ']},
-            {id: 'r_guinsoo', name: "Guinsoo's Reckoning", jaName: 'レディアント グインソー レイジブレード', type: 'radiant', imgName: 'tft5_item_guinsoosragebladeradiant', short:['レディグインソー','光グインソー']},
-            {id: 'r_statikk', name: "Statikk's Favor", jaName: 'レディアント ヴォイドスタッフ', type: 'radiant', imgName: 'tft5_item_statikkshivradiant', short:['レディボイスタ','光ボイスタ']},
-            {id: 'r_titans', name: "Titan's Vow", jaName: 'レディアント 巨人の誓い', type: 'radiant', imgName: 'tft5_item_titansresolveradiant', short:['レディタイタン','光タイタン']},
-            {id: 'r_runaan', name: "Runaan's Tempest", jaName: 'レディアント クラーケンの怒り', type: 'radiant', imgName: 'tft5_item_runaanshurricaneradiant', short:['レディクラーケン','光クラーケン']},
-            {id: 'r_nashor', name: "Baron's Gift", jaName: 'レディアント ナッシャー トゥース', type: 'radiant', imgName: 'tft5_item_leviathanradiant', short:['レディナッシャー','光ナッシャー']},
-            {id: 'r_lastwhisper', name: 'Eternal Whisper', jaName: 'レディアント ラストウィスパー', type: 'radiant', imgName: 'tft5_item_lastwhisperradiant', short:['レディLW','光LW','光ラスウィス']},
-            {id: 'r_rabadon', name: "Rabadon's Ascended Deathcap", jaName: 'レディアント ラバドンデスキャップ', type: 'radiant', imgName: 'tft5_item_rabadonsdeathcapradiant', short:['レディラバドン','光ラバドン','光帽子']},
-            {id: 'r_archangel', name: "Urf-Angel's Staff", jaName: 'レディアント アークエンジェルスタッフ', type: 'radiant', imgName: 'tft5_item_archangelsstaffradiant', short:['レディエンジェル','光アクエン']},
-            {id: 'r_crownguard', name: 'Royal Crownshield', jaName: 'レディアント クラウンガード', type: 'radiant', imgName: 'tft5_item_crownguardradiant', short:['レディクラウン','光クラガ']},
-            {id: 'r_ionic', name: 'Covalent Spark', jaName: 'レディアント アイオニックスパーク', type: 'radiant', imgName: 'tft5_item_ionicsparkradiant', short:['レディアイオニック','光アイオニック','光アイスパ']},
-            {id: 'r_morello', name: 'More More-ellonomicon', jaName: 'レディアント モレロノミコン', type: 'radiant', imgName: 'tft5_item_morellonomiconradiant', short:['レディモレロ','光モレロ']},
-            {id: 'r_jeweled', name: 'Glamorous Gauntlet', jaName: 'レディアント ジュエル ガントレット', type: 'radiant', imgName: 'tft5_item_jeweledgauntletradiant', short:['レディJG','光JG','光ジュエル']},
-            {id: 'r_bluebuff', name: 'Blue Blessing', jaName: 'レディアント ブルーバフ', type: 'radiant', imgName: 'tft5_item_bluebuffradiant', short:['レディ青バフ','光青バフ']},
-            {id: 'r_vow', name: "Bulwark's Oath", jaName: 'レディアント プロテクターの誓い', type: 'radiant', imgName: 'tft5_item_frozenheartradiant', short:['レディプロテクター','光プロテクター']},
-            {id: 'r_adaptive', name: 'Jaksho the Protean', jaName: 'レディアント アダプティブヘルム', type: 'radiant', imgName: 'tft5_item_adaptivehelmradiant', short:['レディアダプティブ','光アダプティブ']},
-            {id: 'r_redemption', name: 'Absolution', jaName: 'レディアント スピリット ビサージュ', type: 'radiant', imgName: 'tft5_item_redemptionradiant', short:['レディビサージュ','光ビサージュ']},
-            {id: 'r_hoj', name: 'Fist of Fairness', jaName: 'レディアント ハンド オブ ジャスティス', type: 'radiant', imgName: 'tft5_item_handofjusticeradiant', short:['レディHOJ','光HOJ','光はんじゃ']},
-            {id: 'r_bramble', name: 'Rosethorn Vest', jaName: 'レディアント ブランブルベスト', type: 'radiant', imgName: 'tft5_item_bramblevestradiant', short:['レディブランブル','光ブランブル']},
-            {id: 'r_gargoyle', name: 'Dvarapala Stoneplate', jaName: 'レディアント ガーゴイルストーンプレート', type: 'radiant', imgName: 'tft5_item_gargoylestoneplateradiant', short:['レディガーゴイル','光ガーゴイル','光石像']},
-            {id: 'r_sunfire', name: 'Sunlight Cape', jaName: 'レディアント サンファイアケープ', type: 'radiant', imgName: 'tft5_item_sunfirecaperadiant', short:['レディサンファイア','光サンファイア','光サンファ']},
-            {id: 'r_steadfast', name: 'Legacy of the Colossus', jaName: 'レディアント 揺るがぬ心', type: 'radiant', imgName: 'tft5_item_nightharvesterradiant', short:['レディ揺るがぬ','光揺るがぬ','光ゆるここ']},
-            {id: 'r_dragon', name: "Dragon's Will", jaName: 'レディアント ドラゴン クロウ', type: 'radiant', imgName: 'tft5_item_dragonsclawradiant', short:['レディドラクロ','光ドラクロ']},
-            {id: 'r_evenshroud', name: 'Equinox', jaName: 'レディアント イーブンシュラウド', type: 'radiant', imgName: 'tft5_item_spectralgauntletradiant', short:['レディイーブン','光イーブン']},
-            {id: 'r_quicksilver', name: 'Quickestsilver', jaName: 'レディアント クイックシルバー', type: 'radiant', imgName: 'tft5_item_quicksilverradiant', short:['レディQSS','光QSS','光サッシュ']},
-            {id: 'r_warmog', name: "Warmog's Pride", jaName: 'レディアント ワーモグ アーマー', type: 'radiant', imgName: 'tft5_item_warmogsarmorradiant', short:['レディワーモグ','光ワーモグ']},
-            {id: 'r_guardbreaker', name: 'Willbreaker', jaName: 'レディアント ストライカー フレイル', type: 'radiant', imgName: 'tft5_item_trapclawradiant', short:['レディストライカー','光ストライカー']},
-            {id: 'r_thiefs', name: "Rascal's Gloves", jaName: 'レディアント 盗賊のグローブ', type: 'radiant', imgName: 'tft5_item_thiefsglovesradiant', short:['レディ盗賊','光盗賊']},
+            {id:'r_deathblade', name:'Luminous Deathblade', jaName:'レディアント デスブレード', type:'radiant'},
+            {id:'r_giantslayer', name:'Demonslayer', jaName:'レディアント ジャイアントスレイヤー', type:'radiant'},
+            {id:'r_hextechgunblade', name:'Hextech Lifeblade', jaName:'レディアント ヘクステックガンブレード', type:'radiant'},
+            {id:'r_spearofshojin', name:'Spear of Hirana', jaName:'レディアント ショウジンの矛', type:'radiant'},
+            {id:'r_guardianangel', name:'Brink of Dawn', jaName:'レディアント ナイトエッジ', type:'radiant'},
+            {id:'r_bloodthirster', name:'Blessed Bloodthirster', jaName:'レディアント ブラッドサースター', type:'radiant'},
+            {id:'r_steraksgage', name:"Sterak's Megashield", jaName:'レディアント ステラックの篭手', type:'radiant'},
+            {id:'r_infinityedge', name:'Zenith Edge', jaName:'レディアント インフィニティエッジ', type:'radiant'},
+            {id:'r_rapidfirecannon', name:'Crest of Cinders', jaName:'レディアント レッドバフ', type:'radiant'},
+            {id:'r_guinsoosrageblade', name:"Guinsoo's Reckoning", jaName:'レディアント グインソー レイジブレード', type:'radiant'},
+            {id:'r_statikkshiv', name:"Statikk's Favor", jaName:'レディアント ヴォイドスタッフ', type:'radiant'},
+            {id:'r_titansresolve', name:"Titan's Vow", jaName:'レディアント 巨人の誓い', type:'radiant'},
+            {id:'r_runaanshurricane', name:"Runaan's Tempest", jaName:'レディアント クラーケンの怒り', type:'radiant'},
+            {id:'r_leviathan', name:"Baron's Gift", jaName:'レディアント ナッシャー トゥース', type:'radiant'},
+            {id:'r_lastwhisper', name:'Eternal Whisper', jaName:'レディアント ラストウィスパー', type:'radiant'},
+            {id:'r_rabadonsdeathcap', name:"Rabadon's Ascended Deathcap", jaName:'レディアント ラバドンデスキャップ', type:'radiant'},
+            {id:'r_archangelsstaff', name:"Urf-Angel's Staff", jaName:'レディアント アークエンジェルスタッフ', type:'radiant'},
+            {id:'r_crownguard', name:'Royal Crownshield', jaName:'レディアント クラウンガード', type:'radiant'},
+            {id:'r_ionicspark', name:'Covalent Spark', jaName:'レディアント アイオニックスパーク', type:'radiant'},
+            {id:'r_morellonomicon', name:'More More-ellonomicon', jaName:'レディアント モレロノミコン', type:'radiant'},
+            {id:'r_jeweledgauntlet', name:'Glamorous Gauntlet', jaName:'レディアント ジュエル ガントレット', type:'radiant'},
+            {id:'r_bluebuff', name:'Blue Blessing', jaName:'レディアント ブルーバフ', type:'radiant'},
+            {id:'r_frozenheart', name:"Bulwark's Oath", jaName:'レディアント プロテクターの誓い', type:'radiant'},
+            {id:'r_adaptivehelm', name:'Jaksho the Protean', jaName:'レディアント アダプティブヘルム', type:'radiant'},
+            {id:'r_redemption', name:'Absolution', jaName:'レディアント スピリット ビサージュ', type:'radiant'},
+            {id:'r_unstableconcoction', name:'Fist of Fairness', jaName:'レディアント ハンド オブ ジャスティス', type:'radiant'},
+            {id:'r_bramblevest', name:'Rosethorn Vest', jaName:'レディアント ブランブルベスト', type:'radiant'},
+            {id:'r_gargoylestoneplate', name:'Dvarapala Stoneplate', jaName:'レディアント ガーゴイルストーンプレート', type:'radiant'},
+            {id:'r_redbuff', name:'Sunlight Cape', jaName:'レディアント サンファイアケープ', type:'radiant'},
+            {id:'r_nightharvester', name:'Legacy of the Colossus', jaName:'レディアント 揺るがぬ心', type:'radiant'},
+            {id:'r_dragonsclaw', name:"Dragon's Will", jaName:'レディアント ドラゴン クロウ', type:'radiant'},
+            {id:'r_spectralgauntlet', name:'Equinox', jaName:'レディアント イーブンシュラウド', type:'radiant'},
+            {id:'r_quicksilver', name:'Quickestsilver', jaName:'レディアント クイックシルバー', type:'radiant'},
+            {id:'r_warmogsarmor', name:"Warmog's Pride", jaName:'レディアント ワーモグ アーマー', type:'radiant'},
+            {id:'r_powergauntlet', name:'Willbreaker', jaName:'レディアント ストライカー フレイル', type:'radiant'},
+            {id:'r_thiefsgloves', name:"Rascal's Gloves", jaName:'レディアント 盗賊のグローブ', type:'radiant'}
         ];
 
         const assetData = { champ: [], item: [], special: [] };
         const iconDict = {};
 
-        const GODS_DATA = [
-            { id: 'ahri', name: 'アーリ' },
-            { id: 'ekko', name: 'エコー' },
-            { id: 'yasuo', name: 'ヤスオ' },
-            { id: 'kayle', name: 'ケイル' },
-            { id: 'thresh', name: 'スレッシュ' },
-            { id: 'evelynn', name: 'イブリン' },
-            { id: 'varus', name: 'ヴァルス' },
-            { id: 'aurelionsol', name: 'オレリオンソル' },
-            { id: 'soraka', name: 'ソラカ' }
+        /* 🐾 プライマル「4つの祝福」── Set 18
+           プライマル2到達で1つ、プライマル4到達でさらに1つ選択する。 */
+        const PRIMAL_BLESSINGS = [
+            { id:'turtle',  name:'カメの祝福',          icon:'🐢', color:'#44cc88', img:'https://tftips.b-cdn.net/blessing/18_primal_turtle.avif',  desc:'味方チームが4秒ごとに最大体力の4%を回復する。' },
+            { id:'bear',    name:'クマの祝福',          icon:'🐻', color:'#c98b3c', img:'https://tftips.b-cdn.net/blessing/18_primal_bear.avif',    desc:'「プライマル」ダメージで体力が12%未満の敵にとどめを刺す。' },
+            { id:'tiger',   name:'トラの祝福',          icon:'🐯', color:'#ff9f43', img:'https://tftips.b-cdn.net/blessing/18_primal_tiger.avif',   desc:'6秒後、「プライマル」のチャンピオンは攻撃速度を35%獲得し、味方チームは攻撃速度を15%獲得する。' },
+            { id:'phoenix', name:'フェニックスの祝福',  icon:'🔥', color:'#ff7a5b', img:'https://tftips.b-cdn.net/blessing/18_primal_phoenix.avif', desc:'「プライマル」がキルまたはアシストを15回獲得するごとに、素材アイテムを1個獲得する。最大4個。' }
         ];
 
+        /* ── 遭遇（Opening Encounter）── Set 18: Enchanted Wilds ──
+           img はチャンピオンid（画像用）。null の場合は絵文字アイコンで表示する。 */
         const ENCOUNTERS_DATA = [
-            { id:'viktor', champ:'ビクター', jaName:'アップグレード済みのチャンピオン', color:'#7fd0ff', desc:'ランダムなコスト1の★2チャンピオンを1体所持して試合を開始する。', icon:'⚙️' },
-            { id:'miipsy', champ:'ミィプシー', jaName:'コスト2スタート', color:'#44cc66', desc:'ランダムなコスト2のチャンピオンを1体所持して試合を開始する。', icon:'⭐' },
-            { id:'lissandra', champ:'リサンドラ', jaName:'ハウリングアビス', color:'#5b6cff', desc:'ハウリングアビスの上で戦う、ランダムな1コストユニットを5体獲得する。', icon:'🌉' },
-            { id:'poppy', champ:'ポッピー', jaName:'素材アイテムの金床', color:'#ff9f43', desc:'「素材アイテムの金床」を2個所持して試合を開始する。', icon:'🛠️' },
-            { id:'twistedfate', champ:'ツイステッド・フェイト', jaName:'黄金の祭典', color:'#ffcc44', desc:'この試合で提示されるオーグメントがすべてゴールドティアになる。', icon:'🪙' },
-            { id:'missfortune', champ:'ミス・フォーチュン', jaName:'コスト3スタート', color:'#3399ff', desc:'ランダムなコスト3のチャンピオンを1体所持して試合を開始する。', icon:'🌟' },
-            { id:'fiora', champ:'フィオラ', jaName:'Silver Scrapes', color:'#c0c0c0', desc:'最後に生存している2人のプレイヤーが70ゴールドを獲得し、壮大な最後の対決が始まる。', icon:'⚔️' },
-            { id:'sona', champ:'ソナ', jaName:'お得なレベル', color:'#7fe0d0', desc:'各レベルで必要な経験値が2減少する。', icon:'🎵' },
-            { id:'zoe', champ:'ゾーイ', jaName:'ゴールドのサブスク', color:'#ffd76e', desc:'毎ステージ、ランダムな量のゴールドを獲得する。全プレイヤーが同じ量のゴールドを獲得する。', icon:'💳' },
-            { id:'graves', champ:'グレイブス', jaName:'プリズム フィナーレ', color:'#ff7ad9', desc:'この試合で最後に提示されるオーグメントがプリズムティアになる。', icon:'💎' },
-            { id:'shen', champ:'シェン', jaName:'プリズム プレリュード', color:'#7ad9ff', desc:'この試合で最初に提示されるオーグメントがプリズムティアになる。', icon:'💠' },
-            { id:'talon', champ:'タロン', jaName:'偵察部隊', color:'#9aa7b5', desc:'この試合ではオーグメントのリロールを+1獲得する。', icon:'🗡️' },
-            { id:'velkoz', champ:'ヴェル=ヴェス', jaName:'複製器×2', color:'#a06bff', desc:'「小さなチャンピオン複製器」を1個獲得する。3-5で、「小型チャンピオン複製器」を獲得する。', icon:'🔹' },
-            { id:'tahmkench', champ:'タム・ケンチ', jaName:'戦利品サブスク', color:'#e0a060', desc:'1ステージごとに、様々な戦利品の中からランダムな戦利品を獲得する。', icon:'🎁' },
-            { id:'none', champ:'なし', jaName:'神々の世界', color:'#7a8aa0', desc:'この試合では誰にも遭遇しない。', icon:'🕊️' },
-            { id:'rastt', champ:'ラースト', jaName:'紋章アンサンブル', color:'#66e0a0', desc:'3個のランダムな紋章アイテムを所持してスタートする。', icon:'🔰' },
-            { id:'ezreal', champ:'エズリアル', jaName:'開幕リロール', color:'#ffd76e', desc:'2-1で、5回分の無料リロールを獲得する。', icon:'🎲' },
-            { id:'ornn', champ:'オーン', jaName:'アーティファクトの金床', color:'#d9a05b', desc:'3-3で全プレイヤーが「アーティファクトの金床」を獲得する。', icon:'🔨' },
-            { id:'morgana', champ:'モルガナ', jaName:'プリズムパーティー', color:'#c46bff', desc:'この試合で提示されるオーグメントがすべてプリズムティアになる。', icon:'💜' },
+            { id:'leblanc', champ:'ルブラン', img:'leblanc', jaName:'アップグレードスタート', color:'#7fd0ff', desc:'ランダムなコスト1の★2チャンピオンを1体所持して試合を開始する。', icon:'⚙️' },
+            { id:'warwick', champ:'ワーウィック', img:'warwick', jaName:'コスト2スタート', color:'#44cc66', desc:'ランダムなコスト2のチャンピオンを1体所持して試合を開始する。', icon:'⭐' },
+            { id:'azir', champ:'アジール', img:'azir', jaName:'ハウリングアビス', color:'#5b6cff', desc:'ハウリングアビスの上で戦う、ランダムな1コストユニットを5体獲得する。', icon:'🌉' },
+            { id:'sivir', champ:'シヴィア', img:'sivir', jaName:'素材アイテムの金床', color:'#ff9f43', desc:'「素材アイテムの金床」を2個所持して試合を開始する。', icon:'🛠️' },
+            { id:'leona', champ:'レオナ', img:'leona', jaName:'黄金の祭典', color:'#ffcc44', desc:'この試合で提示されるオーグメントがすべてゴールドティアになる。', icon:'🪙' },
+            { id:'tristana', champ:'トリスターナ', img:'tristana', jaName:'コスト3スタート', color:'#3399ff', desc:'ランダムなコスト3のチャンピオンを1体所持して試合を開始する。', icon:'🌟' },
+            { id:'draven', champ:'ドレイヴン', img:'draven', jaName:'Silver Scrapes', color:'#c0c0c0', desc:'最後に生存している2人のプレイヤーが70ゴールドを獲得し、壮大な最後の対決が始まる。', icon:'⚔️' },
+            { id:'ash', champ:'アッシュ', img:'ashe', jaName:'お得なレベル', color:'#7fe0d0', desc:'各レベルで必要な経験値が2減少する。', icon:'🎵' },
+            { id:'kobuko', champ:'コブコ', img:'kobuko', jaName:'ゴールドのサブスク', color:'#ffd76e', desc:'ステージ2以降、毎ステージ開始時に2〜6ゴールドを獲得する。全プレイヤーが同じ量のゴールドを獲得する。', icon:'💳' },
+            { id:'graves', champ:'グレイブス', img:null, jaName:'プリズム フィナーレ', color:'#ff7ad9', desc:'この試合で最後に提示されるオーグメントがプリズムティアになる。', icon:'💎' },
+            { id:'morgana', champ:'モルガナ', img:'morgana', jaName:'プリズム プレリュード', color:'#7ad9ff', desc:'この試合で最初に提示されるオーグメントがプリズムティアになる。', icon:'💠' },
+            { id:'teemo', champ:'ティーモ', img:'teemo', jaName:'偵察部隊', color:'#9aa7b5', desc:'この試合ではオーグメントのリロールを+1獲得する。', icon:'🗡️' },
+            { id:'velkoz', champ:'ヴェル=ヴェス', img:null, jaName:'複製器×2', color:'#a06bff', desc:'「小さなチャンピオン複製器」を1個獲得する。3-5で、「小型チャンピオン複製器」を獲得する。', icon:'🔹' },
+            { id:'tahmkench', champ:'タムケンチ', img:null, jaName:'戦利品サブスク', color:'#e0a060', desc:'1ステージごとに、様々な戦利品の中からランダムな戦利品を獲得する。', icon:'🎁' },
+            { id:'none', champ:'なし', img:null, jaName:'遭遇なし', color:'#7a8aa0', desc:'この試合では誰にも遭遇しない。', icon:'🕊️' },
+            { id:'lux', champ:'ラックス', img:'lux', jaName:'紋章アンサンブル', color:'#66e0a0', desc:'3個のランダムな紋章アイテムを所持してスタートする。', icon:'🔰' },
+            { id:'ezreal', champ:'エズリアル', img:'ezreal', jaName:'開幕リロール', color:'#ffd76e', desc:'2-1で、5回分の無料リロールを獲得する。', icon:'🎲' },
+            { id:'ornn', champ:'オーン', img:'ornn', jaName:'アーティファクトの金床', color:'#d9a05b', desc:'3-3で全プレイヤーが「アーティファクトの金床」を獲得する。', icon:'🔨' },
+            { id:'elderdragon', champ:'エルダードラゴン', img:'elderdragon', jaName:'プリズムパーティー', color:'#c46bff', desc:'この試合で提示されるオーグメントがすべてプリズムティアになる。', icon:'💜' },
+            { id:'ivern', champ:'アイバーン', img:'ivern', jaName:'ゴールド フィナーレ', color:'#ffcc44', desc:'この試合で最後に提示されるオーグメントがゴールドティアになる。', icon:'🏅' },
+            { id:'amumu', champ:'アムム', img:'amumu', jaName:'ゴールド プレリュード', color:'#ffd76e', desc:'この試合で最初に提示されるオーグメントがゴールドティアになる。', icon:'🥇' },
+            { id:'kayle', champ:'ケイル', img:'kayle', jaName:'リロールのサブスク', color:'#7fd0ff', desc:'各ステージ開始時、ショップの無料リロールを獲得する。', icon:'🔄' },
+            { id:'yunara', champ:'ユナラ', img:'yunara', jaName:'完成アイテムの金床', color:'#d4af37', desc:'「完成アイテムの金床」を1個所持して試合を開始する。', icon:'⚒️' },
         ];
 
-        const STARGAZER_DATA = [
-            { id: 'boar', name: 'イノシシ', icon: '🐗', color: '#c46bff', desc: '勝利時にゴールドを獲得する。強化マスにいる味方は体力、攻撃力、魔力が8%増加する。「星の観測者」は獲得量が増加する。\n(3) 1ゴールド、2%、16%\n(4) 2ゴールド、7%、24%\n(5) 3ゴールド、12%、32%\n(6) 5ゴールド、17%、37%' },
-            { id: 'medal', name: 'メダル', icon: '🏅', color: '#c46bff', desc: '(3) 強化マスにいる味方が12%のダメージ増加効果を獲得し、味方の★3ユニット1体ごとに効果量が9%増加する。' },
-            { id: 'huntress', name: '女狩人', icon: '🏹', color: '#c46bff', desc: '戦闘開始時: 最も体力が高い敵にマークを付与する。\n(3) 15%、3マーク\n(5) 30%、5マーク\n(7) 45%、7マーク' },
-            { id: 'snake', name: '蛇', icon: '🐍', color: '#c46bff', desc: '(3) 7%耐久力、30%毒ダメージ\n(5) 12%、45%\n(7) 17%、60%' },
-            { id: 'altar', name: '祭壇', icon: '🏛️', color: '#c46bff', desc: '(3) 体力+8%、攻撃速度+12%。生贄60回で星の観測者が追加効果獲得' },
-            { id: 'spring', name: '泉', icon: '⛲', color: '#c46bff', desc: '強化マスにいる味方は、2秒ごとに最大体力の1%を回復する。強化マスにいる「星の観測者」は、追加で体力を2.5%回復し、2秒ごとに攻撃力と魔力が累積しながら増加する。\n(3) 4%\n(5) 7%' },
-            { id: 'mountain', name: '山', icon: '⛰️', color: '#c46bff', desc: '対人戦5回ごとに「星の観測者の紋章」を1つ獲得。各ラウンド様々なボーナスを獲得。' }
-        ];
+        /* 遭遇アイコンのURL（チャンピオン画像）。img が無ければ空文字を返し、絵文字にフォールバックする。 */
+        const getEncounterIconUrl = (enc) => enc && enc.img ? `https://tftips.b-cdn.net/champ/sm/18_${enc.img}.avif` : '';
 
-        const PSIONIC_DATA = [
-            { id: 'tft17_item_psyops_targetlockmod', name: 'ターゲットロック スコープ' },
-            { id: 'tft17_item_psyops_sympatheticimplantmod', name: '共感インプラント' },
-            { id: 'tft17_item_psyops_dronemod', name: 'ドローン アップリンク' },
-            { id: 'tft17_item_psyops_chemicalcapacitormod', name: 'マルウェア マトリックス' },
-            { id: 'tft17_item_psyops_grenademod', name: 'バイオ物質保存装置' }
-        ];
 
-        window.toggleGodSelection = function(roundId, blockId, godId) {
+        window.toggleBlessingSelection = function(roundId, blockId, blessId) {
             const round = db[currentStage].find(r => r.id === roundId);
             if (!round) return;
             const block = round.blocks.find(b => b.id === blockId);
             if (!block) return;
-            
+
             let selected = JSON.parse(block.content || '[]');
-            if (selected.includes(godId)) {
-                selected = selected.filter(id => id !== godId);
+            if (selected.includes(blessId)) {
+                selected = selected.filter(id => id !== blessId);
             } else {
                 if (selected.length >= 2) {
-                    alert('神は最大2個までしか選択できません。');
+                    alert('祝福は最大2個までしか選択できません。');
                     return;
                 }
-                selected.push(godId);
+                selected.push(blessId);
             }
             block.content = JSON.stringify(selected);
             saveToLocal();
@@ -1986,43 +1990,6 @@
             renderMainArea();
         };
 
-        window.toggleStargazerSelection = function(roundId, blockId, sgId) {
-            const round = db[currentStage].find(r => r.id === roundId);
-            if (!round) return;
-            const block = round.blocks.find(b => b.id === blockId);
-            if (!block) return;
-            
-            let selected = JSON.parse(block.content || '[]');
-            if (selected.includes(sgId)) {
-                selected = []; // 選択解除
-            } else {
-                selected = [sgId]; // 1つだけ
-            }
-            block.content = JSON.stringify(selected);
-            saveToLocal();
-            renderMainArea();
-        };
-
-        window.togglePsionicSelection = function(roundId, blockId, psId) {
-            const round = db[currentStage].find(r => r.id === roundId);
-            if (!round) return;
-            const block = round.blocks.find(b => b.id === blockId);
-            if (!block) return;
-            
-            let selected = JSON.parse(block.content || '[]');
-            if (selected.includes(psId)) {
-                selected = selected.filter(id => id !== psId);
-            } else {
-                if (selected.length >= 2) {
-                    alert('サイオニックアイテムは最大2個までしか選択できません。');
-                    return;
-                }
-                selected.push(psId);
-            }
-            block.content = JSON.stringify(selected);
-            saveToLocal();
-            renderMainArea();
-        };
 
         // 外部ファイル (data-*.js) で定義された変数が存在すればそちらを優先して使用します
         const activeChamps = window.CHAMPS || window.CHAMPS_DATA || window.championsData || window.champions || DEFAULT_CHAMPS_DATA;
@@ -2055,8 +2022,9 @@
         }
 
         activeChamps.forEach(c => {
-            if (!c.img) return;
-            const url = `https://cdn.metatft.com/file/metatft/champions/tft17_${c.img.toLowerCase()}.png`;
+            const imgKey = c.img || c.id;   // data-champions.js を読み込んだ場合は id を使う
+            if (!imgKey) return;
+            const url = `https://tftips.b-cdn.net/champ/sm/18_${String(imgKey).toLowerCase()}.avif`;
             assetData.champ.push({ url, cost: c.cost, name: c.jaName || c.name, traits: c.traits });
             if (c.jaName) {
                 iconDict[c.jaName] = url;
@@ -2093,16 +2061,14 @@
             if (i.short) i.short.forEach(s => iconDict[s] = url);
         });
 
-        GODS_DATA.forEach(god => {
-            const url = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
-            assetData.special.push({ url, name: god.name, type: 'champ' });
-            iconDict[god.name] = url;
+        PRIMAL_BLESSINGS.forEach(b => {
+            assetData.special.push({ url: b.img, name: b.name, type: 'item' });
+            iconDict[b.name] = b.img;
         });
 
-        PSIONIC_DATA.forEach(ps => {
-            const url = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
-            assetData.special.push({ url, name: ps.name, type: 'item' });
-            iconDict[ps.name] = url;
+        ENCOUNTERS_DATA.forEach(enc => {
+            const url = getEncounterIconUrl(enc);
+            if (url) iconDict['[遭遇]' + enc.jaName] = url;
         });
 
         let isComposing = false;
@@ -2212,30 +2178,19 @@
             }).join('');
             document.getElementById('drawer-item').innerHTML = itemHtml;
 
-            const godsHtml = `<div class="drawer-section-title">神々の世界</div><div class="drawer-grid">` +
-                GODS_DATA.map(god => {
-                    const url = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
-                    return `<img src="${url}" class="asset-icon" title="${god.name}" draggable="true" ondragstart="handleDragStart(event, '${url}', '${god.name}')" alt="asset">`;
-                }).join('') + `</div>`;
-
-            const psionicHtml = `<div class="drawer-section-title">サイオニック</div><div class="drawer-grid">` +
-                PSIONIC_DATA.map(ps => {
-                    const url = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
-                    return `<img src="${url}" class="asset-icon" title="${ps.name}" draggable="true" ondragstart="handleDragStart(event, '${url}', '${ps.name}')" alt="asset">`;
+            const blessHtml = `<div class="drawer-section-title">プライマルの祝福</div><div class="drawer-grid">` +
+                PRIMAL_BLESSINGS.map(b => {
+                    return `<img src="${b.img}" class="asset-icon" style="border-color:${b.color};border-width:2px;" title="${b.name}" draggable="true" ondragstart="handleDragStart(event, '${b.img}', '${b.name}')" alt="asset">`;
                 }).join('') + `</div>`;
 
             const encHtml = `<div class="drawer-section-title">遭遇</div><div class="drawer-grid">` +
                 ENCOUNTERS_DATA.map(enc => {
-                    let cName = enc.champ;
-                    if (cName === 'ミィプシー') cName = 'ミープシー';
-                    if (cName === 'ヴェル=ヴェス') cName = 'ベル=ヴェス';
-                    if (cName === 'ラースト') cName = 'ラスート';
-                    const url = iconDict[cName] || '';
+                    const url = getEncounterIconUrl(enc);
                     if (!url) return '';
                     return `<img src="${url}" class="asset-icon" style="border-color:${enc.color};border-width:2px;" title="[遭遇] ${enc.jaName}" draggable="true" ondragstart="handleDragStart(event, '${url}', '${enc.jaName}')" alt="asset">`;
                 }).join('') + `</div>`;
 
-            document.getElementById('drawer-special').innerHTML = godsHtml + psionicHtml + encHtml;
+            document.getElementById('drawer-special').innerHTML = blessHtml + encHtml;
         }
 
         function handleDragStart(e, url, name) {
@@ -2982,10 +2937,8 @@
             if (type === 'tier') return '🏆 Tierリスト';
             if (type === 'board') return '♟️ 盤面配置';
             if (type === 'flowchart') return '📊 フローチャート';
-            if (type === 'god_selection') return '⚡ 神々の世界';
             if (type === 'encounter_selection') return '🌟 遭遇';
-            if (type === 'stargazer_selection') return '✨ 星の観測者';
-            if (type === 'psionic_selection') return '🔮 サイオニックアイテム';
+            if (type === 'blessing_selection') return '🐾 プライマルの祝福';
             return '';
         }
 
@@ -3193,25 +3146,25 @@
                         ${cardHtml}
                     </div>
                 `;
-            } else if (block.type === 'god_selection') {
+            } else if (block.type === 'blessing_selection') {
                 let selected = [];
                 try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
-                
-                let godsHtml = `<div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
-                GODS_DATA.forEach(god => {
-                    const isSelected = selected.includes(god.id);
-                    const imgUrl = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
-                    godsHtml += `
-                        <div onclick="toggleGodSelection('${roundId}', '${blockId}', '${god.id}')" 
-                             style="cursor:pointer; display:flex; flex-direction:column; align-items:center; width:64px; opacity:${isSelected ? '1' : '0.4'}; transition:all 0.2s; position:relative; transform:${isSelected ? 'scale(1.05)' : 'scale(1)'}">
-                            <img src="${imgUrl}" style="width:48px; height:48px; border-radius:50%; border:2px solid ${isSelected ? 'var(--gold)' : 'transparent'}; box-shadow:${isSelected ? '0 0 8px rgba(200,155,60,0.6)' : 'none'}; object-fit:cover;">
-                            <span style="font-size:10px; margin-top:6px; font-weight:${isSelected ? '700' : '500'}; color:${isSelected ? 'var(--ink)' : 'var(--ink-light)'}; text-align:center;">${god.name}</span>
-                            ${isSelected ? `<div style="position:absolute; top:-4px; right:4px; background:var(--gold); color:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; box-shadow:0 1px 3px rgba(0,0,0,0.3);">✓</div>` : ''}
+
+                let bHtml = `<div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
+                PRIMAL_BLESSINGS.forEach(b => {
+                    const isSelected = selected.includes(b.id);
+                    bHtml += `
+                        <div onclick="toggleBlessingSelection('${roundId}', '${blockId}', '${b.id}')" title="${b.desc}"
+                             style="cursor:pointer; display:flex; flex-direction:column; align-items:center; width:92px; opacity:${isSelected ? '1' : '0.4'}; transition:all 0.2s; position:relative; transform:${isSelected ? 'scale(1.05)' : 'scale(1)'}">
+                            <img src="${b.img}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:48px; height:48px; border-radius:50%; border:2px solid ${isSelected ? b.color : 'var(--border-strong)'}; box-shadow:${isSelected ? '0 0 8px '+b.color+'99' : 'none'}; object-fit:cover; background:var(--surface);">
+                            <div style="display:none; width:48px; height:48px; border-radius:50%; border:2px solid ${b.color}; background:${b.color}22; align-items:center; justify-content:center; font-size:22px;">${b.icon}</div>
+                            <span style="font-size:10px; margin-top:6px; font-weight:${isSelected ? '700' : '500'}; color:${isSelected ? 'var(--ink)' : 'var(--ink-light)'}; text-align:center; line-height:1.2;">${b.name}</span>
+                            ${isSelected ? `<div style="position:absolute; top:-4px; right:14px; background:${b.color}; color:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; box-shadow:0 1px 3px rgba(0,0,0,0.3);">✓</div>` : ''}
                         </div>
                     `;
                 });
-                godsHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックして神を2体まで選択してください。</div>`;
-                contentHTML = godsHtml;
+                bHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※プライマル2で1つ、プライマル4でさらに1つ選択できます。</div>`;
+                contentHTML = bHtml;
             } else if (block.type === 'encounter_selection') {
                 let selected = [];
                 try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
@@ -3220,11 +3173,7 @@
                 ENCOUNTERS_DATA.forEach(enc => {
                     const isSelected = selected.includes(enc.id);
                     
-                    let cName = enc.champ;
-                    if (cName === 'ミィプシー') cName = 'ミープシー';
-                    if (cName === 'ヴェル=ヴェス') cName = 'ベル=ヴェス';
-                    if (cName === 'ラースト') cName = 'ラスート';
-                    const imgUrl = iconDict[cName];
+                    const imgUrl = getEncounterIconUrl(enc);
 
                     const iconElement = imgUrl 
                         ? `<img src="${imgUrl}" style="width:36px; height:36px; border-radius:50%; border:2px solid ${enc.color}; object-fit:cover; background:var(--surface);">`
@@ -3243,44 +3192,6 @@
                 });
                 encHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックして遭遇を1つ選択してください。マウスポインタを合わせると効果を確認できます。</div>`;
                 contentHTML = encHtml;
-            } else if (block.type === 'stargazer_selection') {
-                let selected = [];
-                try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
-                
-                let sgHtml = `<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
-                STARGAZER_DATA.forEach(sg => {
-                    const isSelected = selected.includes(sg.id);
-                    sgHtml += `
-                        <div onclick="toggleStargazerSelection('${roundId}', '${blockId}', '${sg.id}')" title="${sg.desc}"
-                             style="cursor:pointer; display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; border:2px solid ${isSelected ? sg.color : 'transparent'}; background:${isSelected ? sg.color+'22' : 'var(--surface)'}; opacity:${isSelected ? '1' : '0.6'}; transition:all 0.2s; box-shadow:${isSelected ? 'var(--shadow-sm)' : 'none'}; width: 140px;">
-                            <div style="width:32px; height:32px; border-radius:50%; border:2px solid ${sg.color}; background:${sg.color}22; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;">${sg.icon}</div>
-                            <div style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
-                                <div style="font-size:12px; font-weight:700; color:var(--ink); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${sg.name}</div>
-                            </div>
-                            ${isSelected ? `<div style="color:${sg.color}; font-weight:bold; font-size:16px;">✓</div>` : ''}
-                        </div>`;
-                });
-                sgHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックして星座を1つ選択してください。マウスポインタを合わせると効果を確認できます。</div>`;
-                contentHTML = sgHtml;
-            } else if (block.type === 'psionic_selection') {
-                let selected = [];
-                try { selected = JSON.parse(block.content || '[]'); } catch(e) {}
-                
-                let psHtml = `<div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center; padding:16px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border);">`;
-                PSIONIC_DATA.forEach(ps => {
-                    const isSelected = selected.includes(ps.id);
-                    const imgUrl = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
-                    psHtml += `
-                        <div onclick="togglePsionicSelection('${roundId}', '${blockId}', '${ps.id}')" 
-                             style="cursor:pointer; display:flex; flex-direction:column; align-items:center; width:80px; opacity:${isSelected ? '1' : '0.4'}; transition:all 0.2s; position:relative; transform:${isSelected ? 'scale(1.05)' : 'scale(1)'}">
-                            <img src="${imgUrl}" style="width:48px; height:48px; border-radius:8px; border:2px solid ${isSelected ? 'var(--gold)' : 'var(--border-strong)'}; box-shadow:${isSelected ? '0 0 8px rgba(200,155,60,0.6)' : 'none'}; object-fit:cover; background: var(--surface);">
-                            <span style="font-size:10px; margin-top:6px; font-weight:${isSelected ? '700' : '500'}; color:${isSelected ? 'var(--ink)' : 'var(--ink-light)'}; text-align:center; line-height: 1.2;">${ps.name}</span>
-                            ${isSelected ? `<div style="position:absolute; top:-4px; right:12px; background:var(--gold); color:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; box-shadow:0 1px 3px rgba(0,0,0,0.3);">✓</div>` : ''}
-                        </div>
-                    `;
-                });
-                psHtml += `</div><div style="font-size:11px; color:var(--ink-xlight); margin-top:8px; text-align:center;">※アイコンをクリックしてサイオニックアイテムを2個まで選択してください。</div>`;
-                contentHTML = psHtml;
             }
 
             const isTextBlock = (block.type === 'text' || block.type === 'good' || block.type === 'bad');
@@ -3445,10 +3356,8 @@
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'flowchart')">＋ フローチャート</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'youtube')">＋ YouTube</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'link')">＋ リンク</button>
-                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'god_selection')">＋ 神</button>
                         <button class="add-block-btn" onclick="addBlock('${round.id}', 'encounter_selection')">＋ 遭遇</button>
-                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'stargazer_selection')">＋ 星座</button>
-                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'psionic_selection')">＋ サイオニック</button>
+                        <button class="add-block-btn" onclick="addBlock('${round.id}', 'blessing_selection')">＋ 祝福</button>
                     </div>
                 </div>`;
             });
@@ -3526,7 +3435,7 @@
                         };
 
                         valid.forEach(b => {
-                            const isSettingBlock = ['god_selection', 'encounter_selection', 'stargazer_selection', 'psionic_selection'].includes(b.type);
+                            const isSettingBlock = ['encounter_selection', 'blessing_selection'].includes(b.type);
                             if (!isSettingBlock) flushSettings();
 
                             const fmt = b.format || {};
@@ -3588,18 +3497,17 @@
                                 }
                             }
 
-                            if (b.type === 'god_selection') {
+                            if (b.type === 'blessing_selection') {
                                 let selected = [];
                                 try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
                                 if (selected.length > 0) {
                                     let gHtml = `<div style="display:flex; flex-direction:column; flex:1; min-width:140px;">${settingLabelHtml}<div style="display:flex; gap:8px; padding:8px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); flex:1;">`;
-                                    selected.forEach(godId => {
-                                        const god = GODS_DATA.find(g => g.id === godId);
-                                        if (god) {
-                                            const imgUrl = `https://cdn.metatft.com/file/metatft/gods/tft17_god_${god.id}.png`;
-                                            gHtml += `<div style="display:flex; flex-direction:column; align-items:center; background:var(--surface); padding:6px; border-radius:var(--radius-sm); border:1px solid var(--border-strong); box-shadow:var(--shadow-sm); flex:1;">
-                                                <img src="${imgUrl}" style="width:36px; height:36px; border-radius:50%; border:2px solid var(--gold); object-fit:cover; margin-bottom:4px;">
-                                                <span style="font-size:11px; font-weight:700; color:var(--ink);">${god.name}</span>
+                                    selected.forEach(bid => {
+                                        const bl = PRIMAL_BLESSINGS.find(x => x.id === bid);
+                                        if (bl) {
+                                            gHtml += `<div style="display:flex; flex-direction:column; align-items:center; background:var(--surface); padding:6px; border-radius:var(--radius-sm); border:1px solid ${bl.color}55; box-shadow:var(--shadow-sm); flex:1; text-align:center;">
+                                                <img src="${bl.img}" onerror="this.style.display='none';" style="width:36px; height:36px; border-radius:50%; border:2px solid ${bl.color}; object-fit:cover; margin-bottom:4px; background:var(--surface-2);">
+                                                <span style="font-size:11px; font-weight:700; color:var(--ink); line-height:1.1;">${bl.name}</span>
                                             </div>`;
                                         }
                                     });
@@ -3616,11 +3524,7 @@
                                     selected.forEach(encId => {
                                         const enc = ENCOUNTERS_DATA.find(e => e.id === encId);
                                         if (enc) {
-                                            let cName = enc.champ;
-                                            if (cName === 'ミィプシー') cName = 'ミープシー';
-                                            if (cName === 'ヴェル=ヴェス') cName = 'ベル=ヴェス';
-                                            if (cName === 'ラースト') cName = 'ラスート';
-                                            const imgUrl = iconDict[cName];
+                                            const imgUrl = getEncounterIconUrl(enc);
                                             const iconElement = imgUrl 
                                                 ? `<img src="${imgUrl}" style="width:36px; height:36px; border-radius:50%; border:2px solid ${enc.color}; object-fit:cover; background:var(--surface); flex-shrink:0;">`
                                                 : `<div style="width:36px; height:36px; border-radius:50%; border:2px solid ${enc.color}; background:${enc.color}22; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${enc.icon}</div>`;
@@ -3638,46 +3542,6 @@
                                 }
                             }
 
-                            if (b.type === 'stargazer_selection') {
-                                let selected = [];
-                                try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
-                                if (selected.length > 0) {
-                                    let sgHtml = `<div style="display:flex; flex-direction:column; flex:1; min-width:140px;">${settingLabelHtml}<div style="display:flex; gap:8px; padding:8px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); flex:1;">`;
-                                    selected.forEach(sgId => {
-                                        const sg = STARGAZER_DATA.find(s => s.id === sgId);
-                                        if (sg) {
-                                            sgHtml += `<div style="display:flex; align-items:center; gap:8px; background:var(--surface); padding:6px 8px; border-radius:var(--radius-sm); border:1px solid ${sg.color}55; box-shadow:var(--shadow-sm); width:100%;">
-                                                <div style="width:36px; height:36px; border-radius:50%; border:2px solid ${sg.color}; background:${sg.color}22; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${sg.icon}</div>
-                                                <div style="flex:1; overflow:hidden;">
-                                                    <div style="font-size:13px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${sg.name}">${sg.name}</div>
-                                                </div>
-                                            </div>`;
-                                        }
-                                    });
-                                    sgHtml += `</div></div>`;
-                                    settingsBuffer.push(sgHtml);
-                                }
-                            }
-
-                            if (b.type === 'psionic_selection') {
-                                let selected = [];
-                                try { selected = JSON.parse(b.content || '[]'); } catch(e) {}
-                                if (selected.length > 0) {
-                                    let psHtml = `<div style="display:flex; flex-direction:column; flex:1; min-width:140px;">${settingLabelHtml}<div style="display:flex; gap:8px; padding:8px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); flex:1;">`;
-                                    selected.forEach(psId => {
-                                        const ps = PSIONIC_DATA.find(p => p.id === psId);
-                                        if (ps) {
-                                            const imgUrl = `https://cdn.metatft.com/cdn-cgi/image/width=64,format=webp/file/metatft/items/${ps.id}.png`;
-                                            psHtml += `<div style="display:flex; flex-direction:column; align-items:center; background:var(--surface); padding:6px; border-radius:var(--radius-sm); border:1px solid var(--border-strong); box-shadow:var(--shadow-sm); flex:1; text-align:center;">
-                                                <img src="${imgUrl}" style="width:36px; height:36px; border-radius:6px; border:2px solid var(--gold); object-fit:cover; margin-bottom:4px; background:var(--surface-2);">
-                                                <span style="font-size:10px; font-weight:700; color:var(--ink); line-height:1.1;">${ps.name}</span>
-                                            </div>`;
-                                        }
-                                    });
-                                    psHtml += `</div></div>`;
-                                    settingsBuffer.push(psHtml);
-                                }
-                            }
 
                             if (b.type === 'tier') {
                                 const tierData = JSON.parse(b.content || '[]');
